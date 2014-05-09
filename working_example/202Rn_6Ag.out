@@ -1,0 +1,86 @@
+1
+ *****************************************************************************************************************************
+ *****************************************************************************************************************************
+ **************************************************                         **************************************************
+ **************************************************          GOSIA2         **************************************************
+ **************************************************                         **************************************************
+ *****************************************************************************************************************************
+ *****************************************************************************************************************************
+
+
+
+
+
+                    ROCHESTER COULOMB EXCITATION DATA ANALYSIS CODE BY T.CZOSNYKA,D.CLINE AND C.Y.WU
+                                                  VERS. 20081208.14  NOV 2011
+
+
+
+
+
+
+
+                                        LEVELS
+
+     INDEX     PARITY         SPIN           ENERGY(MEV)
+       1           +           0.0            0.0000
+       2           +           2.0            0.5040
+       3           +           4.0            1.0731
+       4           +           6.0            1.6982
+       5           +           2.0            1.0297
+       6           +           4.0            1.5022
+
+                                        MATRIX ELEMENTS
+
+
+     MULTIPOLARITY=2
+    INDEX   NF     NS          ME               LIMITS
+       1      1      2        1.20000     FIXED
+       2      1      5        0.35622     COUPLED TO   3
+       3      2      2        0.30000     FIXED
+       4      2      3        2.19741     FIXED
+       5      2      5        2.62669     FIXED
+       6      3      3        2.08481     COUPLED TO  11
+       7      3      4        2.50000     FIXED
+       8      3      5        0.00500     FIXED
+       9      5      5        2.68741     COUPLED TO  11
+      10      5      6        2.50000     FIXED
+     MULTIPOLARITY=7
+    INDEX   NF     NS          ME               LIMITS
+      11      2      5       -1.04023     FIXED
+
+
+        6 EXPERIMENTAL YIELDS            0 MATRIX ELEMENTS TO BE VARIED
+
+
+
+
+
+
+     *****  RESTART-MATRIX ELEMENTS OVERWRITTEN  *****
+
+
+
+
+                                        MATRIX ELEMENTS
+
+
+     MULTIPOLARITY=2
+    INDEX   NF     NS          ME               LIMITS
+       1      1      2        0.50000     FIXED
+       2      1      5        0.35622     COUPLED TO   3
+       3      2      2       -1.50000     FIXED
+       4      2      3        2.19741     FIXED
+       5      2      5        2.62669     FIXED
+       6      3      3        2.08481     COUPLED TO  11
+       7      3      4        2.50000     FIXED
+       8      3      5        0.00500     FIXED
+       9      5      5        2.68741     COUPLED TO  11
+      10      5      6        2.50000     FIXED
+     MULTIPOLARITY=7
+    INDEX   NF     NS          ME               LIMITS
+      11      2      5       -1.04023     FIXED
+
+  DURING THE MINIMIZATION IT WAS NECESSARY TO SWITCH OFF THE TIME-OF-FLIGHT CORRECTION
+     AT STEP     1 CHISQ CRITERION FULFILLED
+     *** CHISQ=  0.327107E+01 ***

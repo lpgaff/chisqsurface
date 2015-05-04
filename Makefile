@@ -9,18 +9,18 @@ BINDIR = ../bin/
 
 # -- Linux with egcs
 ifeq ($(shell uname),Linux)
-CXX           = g++
+CXX           = $(shell $(ROOTSYS)/bin/root-config --cxx)
 CXXFLAGS      = -g -Wall -fPIC
-LD            = g++
+LD            = $(shell $(ROOTSYS)/bin/root-config --cxx)
 LDFLAGS       = -g
 SOFLAGS       = -shared
 endif
 
 # -- Mac OS X - Darwin
 ifeq ($(shell uname),Darwin)
-CXX           = g++
+CXX           = $(shell $(ROOTSYS)/bin/root-config --cxx)
 CXXFLAGS      = -g -Wall -fPIC
-LD            = g++
+LD            = $(shell $(ROOTSYS)/bin/root-config --cxx)
 LDFLAGS       = -g
 SOFLAGS       = -dylib
 endif

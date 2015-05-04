@@ -310,7 +310,7 @@ int main( int argc, char* argv[] ) {
 		arg >> Nsteps_dme;
 	}
 	if( argc >= 12 ) {
-		for ( int i = 11; i <= argc; i++ ) {
+		for ( int i = 11; i < argc; i++ ) {
 			arg.str("");
 			arg.clear();
 			arg << argv[i];

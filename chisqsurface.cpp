@@ -319,14 +319,14 @@ int main( int argc, char* argv[] ) {
 			else if ( arg.str().substr(0,2) == "-t" ) {
 				tmp.str("");
 				tmp.clear();
-				tmp << arg.str().substr(2,1);
+				tmp << arg.str().substr(2,arg.str().size()-2);
 				tmp >> tme_index;
 				cout << "Transitional matrix element, index " << tme_index << endl;
 			}
 			else if ( arg.str().substr(0,2) == "-d" ) {
 				tmp.str("");
 				tmp.clear();
-				tmp << arg.str().substr(2,1);
+				tmp << arg.str().substr(2,arg.str().size()-2);
 				tmp >> dme_index;
 				cout << "Diagonal matrix element, index " << dme_index << endl;
 			}

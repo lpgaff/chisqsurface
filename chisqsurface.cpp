@@ -6,7 +6,7 @@
 #include "TGraph.h"
 #include "TGraph2D.h"
 
-#include <stdlib.h>
+#include <ctime>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -28,6 +28,32 @@ string convertFloat( float number ) {
 	stringstream ss;
 	ss << number;
 	return ss.str();
+	
+}
+
+string getDateTime() {
+	
+	// get time now
+	time_t t = time(0);
+	struct tm * now = localtime( & t );
+
+	// make it into a nice string YYYYMMDD-HHMMSS
+	string date_string = convertInt( now->tm_year + 1900 );
+	if ( now->tm_mon < 9 ) date_string += "0";
+	date_string += convertInt( now->tm_mon + 1 );
+	if ( now->tm_mday < 10 ) date_string += "0";
+	date_string += convertInt( now->tm_mday );
+	
+	date_string += "-";
+	if ( now->tm_hour < 10 ) date_string += "0";
+	date_string += convertInt( now->tm_hour );
+	if ( now->tm_min < 10 ) date_string += "0";
+	date_string += convertInt( now->tm_min );
+	if ( now->tm_sec < 10 ) date_string += "0";
+	date_string += convertInt( now->tm_sec );
+	
+	return date_string;
+
 	
 }
 
@@ -342,16 +368,25 @@ int main( int argc, char* argv[] ) {
 	//  if continuing "cont" read output file first
 	//  if not, copy old files to ...old 
 	string outname = in_proj.substr( 0, in_proj.find_last_of(".") );
-	string textname = outname + ".chisq";
+	vector<string> textname;
+	textname.push_back( outname + ".chisq" );
+	textname.push_back( outname + ".chisq_" + getDateTime() );
 	string rsltname = outname + ".rslt";
 	string rootname = outname + ".root";
-	ofstream out, rslt;
+	vector<ofstream*> out;
+	ofstream outa, outb;
+	ofstream rslt;
 	ifstream old;
 	string cmd;
-	if ( cont || read ) old.open( textname.c_str(), ios::in );	
-	else out.open( textname.c_str(), ios::out );
+	if ( cont || read ) old.open( textname[0].c_str(), ios::in );
+	else {
+		outa.open( textname[0].c_str(), ios::out );
+		outb.open( textname[1].c_str(), ios::out );
+		out.push_back( &outa );
+		out.push_back( &outb );
+	}
 	
-	cmd = "cp " + textname + " " + textname + ".old";
+	cmd = "cp " + textname[0] + " " + textname[0] + ".old";
 	if( system(NULL) ) system( cmd.c_str() );
 	cmd = "cp " + rootname + " " + rootname + ".old";
 	if( system(NULL) ) system( cmd.c_str() );
@@ -400,7 +435,10 @@ int main( int argc, char* argv[] ) {
 							
 			// Reopen file for writing
 			old.close();
-			out.open( textname.c_str(), ios::out );
+			outa.open( textname[0].c_str(), ios::out );
+			outb.open( textname[1].c_str(), ios::out );
+			out.push_back( &outa );
+			out.push_back( &outb );
 			
 			if ( cont ) {			
 				cout << "\nContinuing from a previous state...\n";
@@ -411,7 +449,7 @@ int main( int argc, char* argv[] ) {
 		}
 		else {
 		
-			cout << "Cannot open " << textname.c_str() << " in order to resume\n";
+			cout << "Cannot open " << textname[0].c_str() << " in order to resume\n";
 			cont = false;
 		
 		}
@@ -423,8 +461,9 @@ int main( int argc, char* argv[] ) {
 	TGraph2D *gChisq_proj = new TGraph2D();
 	TGraph2D *gChisq_targ = new TGraph2D();
 	TGraph2D *gChisq_1sigma = new TGraph2D();
+	TGraph2D *gChisq_2sigma = new TGraph2D();
 	TGraph2D *gChisq_1sigma_rotorlim = new TGraph2D();
-	TGraph2D *gChisq_1sigma_2rotorlim = new TGraph2D();
+	TGraph2D *gChisq_2sigma_rotorlim = new TGraph2D();
 	gChisq->SetName("gChisq");
 	gChisq_proj->SetName("gChisq_proj");
 	gChisq_targ->SetName("gChisq_targ");
@@ -433,19 +472,22 @@ int main( int argc, char* argv[] ) {
 	gChisq_proj->SetTitle("#chi^{2} surface plot for projectile;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
 	gChisq_targ->SetTitle("#chi^{2} surface plot for target;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
 	gChisq_1sigma->SetTitle("#chi^{2}+1 cut;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
+	gChisq_2sigma->SetTitle("#chi^{2}+2 cut;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
 	gChisq_1sigma_rotorlim->SetTitle("#chi^{2}+1 cut plus rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
-	gChisq_1sigma_2rotorlim->SetTitle("#chi^{2}+1 cut plus twice the rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
+	gChisq_2sigma_rotorlim->SetTitle("#chi^{2}+2 cut plus rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
 	if( Nsteps_dme > 4 && Nsteps_dme < 999 ) {
 		gChisq->SetNpx(Nsteps_dme-1);
 		gChisq_1sigma->SetNpx(Nsteps_dme-1);
+		gChisq_2sigma->SetNpx(Nsteps_dme-1);
 		gChisq_1sigma_rotorlim->SetNpx(Nsteps_dme-1);
-		gChisq_1sigma_2rotorlim->SetNpx(Nsteps_dme-1);
+		gChisq_2sigma_rotorlim->SetNpx(Nsteps_dme-1);
 	}
 	if( Nsteps_tme > 4 && Nsteps_tme < 999 ) {
 		gChisq->SetNpy(Nsteps_tme);
 		gChisq_1sigma->SetNpy(Nsteps_tme);
+		gChisq_2sigma->SetNpy(Nsteps_tme);
 		gChisq_1sigma_rotorlim->SetNpy(Nsteps_tme);
-		gChisq_1sigma_2rotorlim->SetNpy(Nsteps_tme);
+		gChisq_2sigma_rotorlim->SetNpy(Nsteps_tme);
 	}
 	
 	// 1-dimensional chisq graphs for each dme
@@ -553,10 +595,18 @@ int main( int argc, char* argv[] ) {
 			
 			}
 	
+			// Print to terminal
 			cout << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
-			out << dme << "\t" << tme << "\t" << chisq_proj << "\t";
-			out << chisq_targ << "\t" << chisq << endl;
 
+			// Print to file
+			for ( int k = 0; k < 2; k++ ) {
+				
+				(*out[k]) << dme << "\t" << tme << "\t" << chisq_proj << "\t";
+				(*out[k]) << chisq_targ << "\t" << chisq << endl;
+				
+			}
+			
+			// Write in root graphs and histograms
 			gChisq->SetPoint( i*Nsteps_tme + j, dme, tme, chisq );
 			hChisq->SetBinContent( i+1, j+1, chisq );
 			gChisq_proj->SetPoint( i*Nsteps_tme + j, dme, tme, chisq_proj );
@@ -569,7 +619,7 @@ int main( int argc, char* argv[] ) {
 
 	}
 	
-	// Make 1sigma cut (chisq_min+1) and write values
+	// Make 1sigma and 2sigma cuts (chisq_min + 1 and 2) and write values
 	double chisq_min = gChisq->GetZmin();
 	int ix, iy, iz;
 	TH2D *hChisq_1sigma = new TH2D("hChisq_1sigma",
@@ -580,13 +630,17 @@ int main( int argc, char* argv[] ) {
 		"#chi^{2}+1 cut plus rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}",
 		Nsteps_dme, low_dme-0.5*stepSize_dme, upp_dme+0.5*stepSize_dme,
 		Nsteps_tme, low_tme-0.5*stepSize_tme, upp_tme+0.5*stepSize_tme);
-	TH2D *hChisq_1sigma_2rotorlim = new TH2D("hChisq_1sigma_2rotorlim",
-		"#chi^{2}+1 cut plus twice the rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}",
+	TH2D *hChisq_2sigma = new TH2D("hChisq_2sigma",
+		"#chi^{2}+2 cut;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}",
+		Nsteps_dme, low_dme-0.5*stepSize_dme, upp_dme+0.5*stepSize_dme,
+		Nsteps_tme, low_tme-0.5*stepSize_tme, upp_tme+0.5*stepSize_tme);
+	TH2D *hChisq_2sigma_rotorlim = new TH2D("hChisq_2sigma_rotorlim",
+		"#chi^{2}+2 cut plus rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}",
 		Nsteps_dme, low_dme-0.5*stepSize_dme, upp_dme+0.5*stepSize_dme,
 		Nsteps_tme, low_tme-0.5*stepSize_tme, upp_tme+0.5*stepSize_tme);
 
 	double tme_tmp, dme_tmp, chisq_tmp;
-	int ctr1 = 0, ctr2 = 0, ctr3 = 0;
+	int ctr1 = 0, ctr2 = 0, ctr3 = 0, ctr4 = 0;
 	for( int p = 0; p < Nsteps_dme; p++ ) {
 
 		dme_tmp = low_dme + p*stepSize_dme;
@@ -597,30 +651,38 @@ int main( int argc, char* argv[] ) {
 			chisq_tmp = hChisq->GetBinContent( p+1, q+1 );
 
 			if( chisq_tmp <= chisq_min+1 ) {
-
+				
 				gChisq_1sigma->SetPoint( ctr1, dme_tmp, tme_tmp, chisq_tmp );
 				hChisq_1sigma->SetBinContent( p+1, q+1, chisq_tmp );
 				ctr1++;
-		
+				
 				if( TMath::Abs(dme_tmp) <= tme_tmp*1.19523 ) {
-
+					
 					gChisq_1sigma_rotorlim->SetPoint(ctr2,dme_tmp,tme_tmp,chisq_tmp);
 					hChisq_1sigma_rotorlim->SetBinContent(p+1,q+1,chisq_tmp);
 					ctr2++;
-
+					
 				}
-			
-				if( TMath::Abs(dme_tmp) <= tme_tmp*2*1.19523 ) {
-
-					gChisq_1sigma_2rotorlim->SetPoint(ctr3,dme_tmp,tme_tmp,chisq_tmp);
-					hChisq_1sigma_2rotorlim->SetBinContent(p+1,q+1,chisq_tmp);
-					ctr3++;
-
-				}
-
+				
 			}
-
-		}	
+			
+			if( chisq_tmp <= chisq_min+2 ) {
+				
+				gChisq_2sigma->SetPoint( ctr3, dme_tmp, tme_tmp, chisq_tmp );
+				hChisq_2sigma->SetBinContent( p+1, q+1, chisq_tmp );
+				ctr3++;
+				
+				if( TMath::Abs(dme_tmp) <= tme_tmp*1.19523 ) {
+					
+					gChisq_2sigma_rotorlim->SetPoint(ctr4,dme_tmp,tme_tmp,chisq_tmp);
+					hChisq_2sigma_rotorlim->SetBinContent(p+1,q+1,chisq_tmp);
+					ctr4++;
+					
+				}
+				
+			}
+			
+		}
 
 	}
 	
@@ -628,24 +690,38 @@ int main( int argc, char* argv[] ) {
 	double dme_min = hChisq->GetXaxis()->GetBinCenter(ix);
 	double tme_min = hChisq->GetYaxis()->GetBinCenter(iy);
 
-	double tme_err_low = 0.5*stepSize_tme, tme_err_upp = 0.5*stepSize_tme;
-	double dme_err_low = 0.5*stepSize_dme, dme_err_upp = 0.5*stepSize_dme;
+	double tme_err_low[2], dme_err_low[2];
+	double tme_err_upp[2], dme_err_upp[2];
 
-	tme_err_low += TMath::Abs( tme_min - gChisq_1sigma->GetYmin() );
-	tme_err_upp += TMath::Abs( tme_min - gChisq_1sigma->GetYmax() );
-	dme_err_low += TMath::Abs( dme_min - gChisq_1sigma->GetXmin() );
-	dme_err_upp += TMath::Abs( dme_min - gChisq_1sigma->GetXmax() );
+	for( int i = 0; i < 2; i++ ) {
+		
+		tme_err_low[i] = 0.5*stepSize_tme;
+		tme_err_upp[i] = 0.5*stepSize_tme;
+		dme_err_low[i] = 0.5*stepSize_dme;
+		dme_err_upp[i] = 0.5*stepSize_dme;
+		
+	}
 
-//	TH2D *hChisq_1sigma = (TH2D*)gChisq_1sigma->GetHistogram();
-
+	tme_err_low[0] += TMath::Abs( tme_min - gChisq_1sigma->GetYmin() );
+	tme_err_upp[0] += TMath::Abs( tme_min - gChisq_1sigma->GetYmax() );
+	dme_err_low[0] += TMath::Abs( dme_min - gChisq_1sigma->GetXmin() );
+	dme_err_upp[0] += TMath::Abs( dme_min - gChisq_1sigma->GetXmax() );
+	
+	tme_err_low[1] += TMath::Abs( tme_min - gChisq_2sigma->GetYmin() );
+	tme_err_upp[1] += TMath::Abs( tme_min - gChisq_2sigma->GetYmax() );
+	dme_err_low[1] += TMath::Abs( dme_min - gChisq_2sigma->GetXmin() );
+	dme_err_upp[1] += TMath::Abs( dme_min - gChisq_2sigma->GetXmax() );
+	
 	cout << "\nChisq minimum found at " << chisq_min << endl;
 	cout << "<0+1||E2||2+1> = " << tme_min << "(-" << tme_err_low;
 	cout << "; +" << tme_err_upp << ")" << endl;
 	cout << "<2+1||E2||2+1> = " << dme_min << "(-" << dme_err_low;
 	cout << "; +" << dme_err_upp << ")\n" << endl;
 	
-	rslt << "<0+1||E2||2+1> = " << tme_min << "\t-" << tme_err_low << "\t+" << tme_err_upp << endl;
-	rslt << "<2+1||E2||2+1> = " << dme_min << "\t-" << dme_err_low << "\t+" << dme_err_upp << endl;
+	rslt << "<0+1||E2||2+1> = " << tme_min << "\t-" << tme_err_low << "\t+" << tme_err_upp;
+	rslt << "<2+1||E2||2+1> = " << dme_min << "\t-" << dme_err_low << "\t+" << dme_err_upp;
+	rslt << " (1sig)\t-" << tme_err_low << "\t+" << tme_err_upp << " (2sig)" << endl;
+	rslt << " (1sig)\t-" << dme_err_low << "\t+" << dme_err_upp << " (2sig)" << endl;
 	rslt << "Chisq minimum = " << chisq_min << endl;
 	rslt << "Ndata projectile: " << Ndata_proj << endl;
 	rslt << "          target: " << Ndata_targ << endl;
@@ -659,24 +735,26 @@ int main( int argc, char* argv[] ) {
 	gChisq_proj->Write("gChisq_proj");
 	gChisq_targ->Write("gChisq_targ");
 	gChisq_1sigma->Write("gChisq_1sigma");
+	gChisq_2sigma->Write("gChisq_2sigma");
 	gChisq_1sigma_rotorlim->Write("gChisq_1sigma_rotorlim");
-	gChisq_1sigma_2rotorlim->Write("gChisq_1sigma_2rotorlim");
+	gChisq_2sigma_rotorlim->Write("gChisq_2sigma_rotorlim");
 	hChisq->Write("hChisq");
 	hChisq_proj->Write("hChisq_proj");
 	hChisq_targ->Write("hChisq_targ");
 	hChisq_1sigma->Write("hChisq_1sigma");
+	hChisq_2sigma->Write("hChisq_2sigma");
 	hChisq_1sigma_rotorlim->Write("hChisq_1sigma_rotorlim");
-	hChisq_1sigma_2rotorlim->Write("hChisq_1sigma_2rotorlim");
+	hChisq_2sigma_rotorlim->Write("hChisq_2sigma_rotorlim");
 	for( int id = 0; id < Nsteps_dme; id++ ) {
 		gName = "gChisq_DME_" + convertInt(id);
 		gChisqDME[id]->Write(gName.c_str());
 	}
 	root->Close();
-	out.close();
+	for ( int k = 0; k < 2; k++ ) out[k]->close();
 	rslt.close();
 
 	cout << "I wrote the data to...\n\tROOT file: " << rootname << endl;
-	cout << "\tTEXT file: " << textname << endl;
+	cout << "\tTEXT files: " << textname[0] << " and " << textname[1] << endl;
 	cout << "I wrote the results to " << rsltname << endl;
 
 	return 0;

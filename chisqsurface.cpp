@@ -44,7 +44,7 @@ string getDateTime() {
 	if ( now->tm_mday < 10 ) date_string += "0";
 	date_string += convertInt( now->tm_mday );
 	
-	date_string += "-";
+	date_string += "_";
 	if ( now->tm_hour < 10 ) date_string += "0";
 	date_string += convertInt( now->tm_hour );
 	if ( now->tm_min < 10 ) date_string += "0";

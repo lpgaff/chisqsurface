@@ -752,6 +752,7 @@ int main( int argc, char* argv[] ) {
 	root->Close();
 	for ( int k = 0; k < 2; k++ ) out[k]->close();
 	rslt.close();
+	out.resize(0);   // clean up outfile vector
 
 	cout << "I wrote the data to...\n\tROOT file: " << rootname << endl;
 	cout << "\tTEXT files: " << textname[0] << " and " << textname[1] << endl;

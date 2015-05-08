@@ -28,5 +28,5 @@ all: chisqsurface
 
 chisqsurface:  chisqsurface.cpp
 # -----------------------------------------------------------------------------
-	$(CXX) $(CXXFLAGS) $(LIBS) $(SOFLAGS) $< -o $(BINDIR)/$@
+	$(CXX) $(CXXFLAGS) $(LIBS) $< -o $(BINDIR)/$@
 

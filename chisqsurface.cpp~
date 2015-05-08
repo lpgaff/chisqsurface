@@ -1,17 +1,17 @@
 // Read in gosia2 input files and do a loop over a range of matrix elements,
 // extracting and plotting the chisq as we go
 
+#include "TFile.h"
+#include "TH2D.h"
+#include "TGraph.h"
+#include "TGraph2D.h"
+
 #include <ctime>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <vector>
-
-#include "TFile.h"
-#include "TH2D.h"
-#include "TGraph.h"
-#include "TGraph2D.h"
 
 using namespace std;
 

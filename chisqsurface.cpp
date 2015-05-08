@@ -713,12 +713,12 @@ int main( int argc, char* argv[] ) {
 	dme_err_upp[1] += TMath::Abs( dme_min - gChisq_2sigma->GetXmax() );
 	
 	cout << "\nChisq minimum found at " << chisq_min << endl;
-	cout << "<0+1||E2||2+1> = " << tme_min << " 1sig.(-" << tme_err_low[0];
-	cout << "; +" << tme_err_upp[0] << ")" << " 2sig.(-" << tme_err_low[1];
-	cout << "; +" << tme_err_upp[1] << ")" << endl;
-	cout << "<2+1||E2||2+1> = " << dme_min << " 1sig.(-" << dme_err_low[0];
-	cout << "; +" << dme_err_upp[0] << ")" << " 1sig.(-" << dme_err_low[1];
-	cout << "; +" << dme_err_upp[1] << ")" << endl << endl;
+	cout << "<0+1||E2||2+1> = " << tme_min << "(-" << tme_err_low[0];
+	cout << "; +" << tme_err_upp[0] << ")1sig." << " (-" << tme_err_low[1];
+	cout << "; +" << tme_err_upp[1] << ")2sig." << endl;
+	cout << "<2+1||E2||2+1> = " << dme_min << "(-" << dme_err_low[0];
+	cout << "; +" << dme_err_upp[0] << ")1sig." << " (-" << dme_err_low[1];
+	cout << "; +" << dme_err_upp[1] << ")2sig." << endl << endl;
 	
 	rslt << "<0+1||E2||2+1> = " << tme_min << "\t-" << tme_err_low[0] << "\t+" << tme_err_upp[0];
 	rslt << "<2+1||E2||2+1> = " << dme_min << "\t-" << dme_err_low[0] << "\t+" << dme_err_upp[0];

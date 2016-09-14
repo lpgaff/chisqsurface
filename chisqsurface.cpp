@@ -146,13 +146,26 @@ int IntegrateProjectile( string in_proj ) {
 	string intifile = in_proj.substr( 0, in_proj.find_last_of(".") );
 	intifile += ".INTI.inp";
 	
-	string cmd = "gosia < " + intifile;
-	cmd.append(" > /dev/null 2>&1");
+	string line, cmd;
 	
 	ifstream inti;
 	inti.open( intifile.c_str(), ios::in );
 	if( !inti.is_open() ) return 0;
-	else inti.close();
+	else {
+		
+		// Check first line of integral file
+		getline( inti, line );
+
+		// If it looks like a gosia2 input, use that, else just normal gosia
+		if( line == "1" || line == "2" ) cmd = "gosia2 < ";
+		else cmd = "gosia < ";
+		
+		inti.close();
+		
+	}
+	
+	cmd.append( intifile );
+	cmd.append(" > /dev/null 2>&1" );
 	
 	if( system(NULL) ) system( cmd.c_str() );
 	else {

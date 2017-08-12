@@ -49,6 +49,8 @@ files will be read/written. Same is for `-tN` and the transitional matrix elemen
 FILE FORMAT AND PREPARATION
 ---------------------------
 
+(Update: the example and description below assumes gosia1 for the integration step. The current recommendation is to use gosia2, so this should be updated.)
+
 For the code to work, the input must be prepared in a specific way. That is to say that the integration step, 'OP,INTI', and the q-parameter map step, 'OP,MAP', must be run for both the projectile and target files using gosia1 with the correct gosia1 style filenames in each case. Keeping these filenames in the same format as <in_proj> is useful. If your gosia2 projectile file is named "example.inp", then your integration file should be named "example.INTI.inp" so that the code can run the integration step for each meshpoint. Similarly, you could also name the map input file as "example.MAP.inp".
 
 Similarly, the output files must follow this convention with the ".out" prefix. This is so the code can read the chi2 value from the output files.

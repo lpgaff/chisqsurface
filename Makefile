@@ -1,10 +1,10 @@
-BINDIR = ../bin
+BINDIR = ./bin
 
-CXX           = $(shell $(ROOTSYS)/bin/root-config --cxx)
-CXXFLAGS      = $(shell $(ROOTSYS)/bin/root-config --cflags) -g -Wall -fPIC
-LD            = $(shell $(ROOTSYS)/bin/root-config --ld)
-LDFLAGS       = $(shell $(ROOTSYS)/bin/root-config --ldflags) -g
-LIBS          = $(shell $(ROOTSYS)/bin/root-config --libs)
+CXX           = $(shell root-config --cxx)
+CXXFLAGS      = $(shell root-config --cflags) -g -Wall -fPIC
+LD            = $(shell root-config --ld)
+LDFLAGS       = $(shell root-config --ldflags) -g
+LIBS          = $(shell root-config --libs)
 
 #######################################
 # -- DEFINE ARCH to something sensible!

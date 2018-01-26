@@ -734,8 +734,8 @@ int main( int argc, char* argv[] ) {
 	cout << "; +" << dme_err_upp[1] << ")2sig." << endl << endl;
 	
 	rslt << "<0+1||E2||2+1> = " << tme_min << "\t-" << tme_err_low[0] << "\t+" << tme_err_upp[0];
-	rslt << "<2+1||E2||2+1> = " << dme_min << "\t-" << dme_err_low[0] << "\t+" << dme_err_upp[0];
 	rslt << " (1sig)\t-" << tme_err_low[1] << "\t+" << tme_err_upp[1] << " (2sig)" << endl;
+	rslt << "<2+1||E2||2+1> = " << dme_min << "\t-" << dme_err_low[0] << "\t+" << dme_err_upp[0];
 	rslt << " (1sig)\t-" << dme_err_low[1] << "\t+" << dme_err_upp[1] << " (2sig)" << endl;
 	rslt << "Chisq minimum = " << chisq_min << endl;
 	rslt << "Ndata projectile: " << Ndata_proj << endl;

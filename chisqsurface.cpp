@@ -99,7 +99,8 @@ string FindTargetFile( string in_proj ) {
 	bool flag2 = false;
 	string line1, line2, tmp;
 	string qry1 = "OP,FILE";
-	string qry2 = "26,";
+	string qry2 = "26";
+	string qry3 = "OP,";
 	string in_targ = "empty";
  
 	getline( g2in,line1 );
@@ -113,7 +114,14 @@ string FindTargetFile( string in_proj ) {
 	}
 	
 	getline( g2in, line2 );
-	while ( !g2in.eof() && !flag2 ) {
+	while( !g2in.eof() && !flag2 ) {
+		
+		if( line1.compare( 0, qry3.size(), qry3 ) == 0 ||
+		   line2.compare( 0, qry3.size(), qry3 ) == 0 ) {
+			
+			break;
+			
+		}
 
 		if( line1.compare( 0, qry2.size(), qry2 ) == 0 ) {
 			

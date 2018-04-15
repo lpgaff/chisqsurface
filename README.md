@@ -4,14 +4,15 @@ chisqsurface
 DESCRIPTION
 -----------
 
-chisqsurface takes a gosia2 input file with the OP,MINI command and calculates the chisq surface for a given range and number of transitional and diagonal matrix elements. The output is in the form of a simple text file of chi2 values and a root file with many graphs and histograms including chi2 + 1 cuts
+chisqsurface takes a gosia or gosia2 input file with the OP,MINI command and calculates the 2-dimensional chi^2 surface for a given range and number of transitional and diagonal matrix elements. The output is in the form of a simple text file of chi^2 values and a root file with many graphs and histograms including chi^2 + 1 cuts.
 
 
 REQUIREMENTS
 ------------
 
-chisqsurface is written in C++ with root libraries. You will need a working version of g++.
-ROOT (root.cern.ch) must be available in a directory where the compiler can find it.
+chisqsurface is written in C++ with ROOT libraries.
+You will need a compiler that accepts the c++11 standard or greater.
+ROOT (root.cern.ch) must be installed and directories set correctly (i.e. using thisroot.sh).
 Further to this, gosia and gosia2 must be installed (with names "gosia" and "gosia2", respectively) and your PATH variable should point their directory(s).
 Please check the Makefile and define the BINDIR for your needs.
 

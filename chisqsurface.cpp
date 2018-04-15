@@ -1,6 +1,7 @@
 // Read in gosia2 input files and do a loop over a range of matrix elements,
 // extracting and plotting the chisq as we go
 
+#include <cstdlib>
 #include <ctime>
 #include <iostream>
 #include <fstream>
@@ -12,6 +13,8 @@
 #include "TH2D.h"
 #include "TGraph.h"
 #include "TGraph2D.h"
+
+#include "cxxopts.hpp"
 
 using namespace std;
 
@@ -57,15 +60,15 @@ string getDateTime() {
 	
 }
 
-int LookUpOldChisq( const vector<double>& vec, double dme, double tme ) {
+int LookUpOldChisq( const vector<float>& vec, float dme, float tme ) {
 
 	// Cycle through array and return index that matches matrix elements
 	int index = -1;
 	
 	for ( int i = 0; i < int(vec.size()/5); i++ ) {
 	
-		if ( TMath::Abs( dme - vec[5*i+0] ) < 1E-8 ) {
-			if ( TMath::Abs( tme - vec[5*i+1] ) < 1E-8 ) {
+		if ( TMath::Abs( dme - vec[5*i+0] ) < 1E-6 ) {
+			if ( TMath::Abs( tme - vec[5*i+1] ) < 1E-6 ) {
 
 				index = i; // found it!
 				break; // stop looking once we've found it!
@@ -77,6 +80,61 @@ int LookUpOldChisq( const vector<double>& vec, double dme, double tme ) {
 
 	return index; 
 
+}
+
+string FindTargetFile( string in_proj ) {
+	
+	// Open gosia input file for projectile and find the target name
+	ifstream g2in;
+	g2in.open( in_proj.c_str(), ios::in );
+	if( !g2in.is_open() ) {
+		
+		cout << "Unable to open " << in_proj << endl;
+		return "empty";
+		
+	}
+	
+	// Search for tape 26
+	bool flag1 = false;
+	bool flag2 = false;
+	string line1, line2, tmp;
+	string qry1 = "OP,FILE";
+	string qry2 = "26,";
+	string in_targ = "empty";
+ 
+	getline( g2in,line1 );
+	while ( !g2in.eof() && !flag1 ) {
+		
+		if( line1.compare( 0, qry1.size(), qry1 ) == 0 )
+			flag1 = true;
+		
+		getline( g2in, line1 );
+		
+	}
+	
+	getline( g2in, line2 );
+	while ( !g2in.eof() && !flag2 ) {
+
+		if( line1.compare( 0, qry2.size(), qry2 ) == 0 ) {
+			
+			in_targ = line2;
+			flag2 = true;
+			
+		}
+
+		getline( g2in, line1 );
+		getline( g2in, line2 );
+		
+	}
+	
+	g2in.close();
+	
+	if( !flag1 ) cout << "Couldn't find OP,FILE in " << in_proj << endl;
+	if( !flag2 ) cout << "Couldn't find tape number 26 in " << in_proj << endl;
+	else cout << "Found corresponding target file: " << in_targ << endl;
+	
+	return in_targ;
+	
 }
 
 double ReadChiSqFromFile( string gosiaoutfile ) {
@@ -118,34 +176,94 @@ double ReadChiSqFromFile( string gosiaoutfile ) {
 
 }
 
-int GetChiSq( string in_proj, string in_targ, double &chisq_proj, double &chisq_targ ) {
+int GetChiSq( string in_proj, double &chisq_proj ) {
+	
+	string out_proj = in_proj.substr( 0, in_proj.find_last_of(".") );
+	out_proj += ".out";
+	
+	string cmd = "gosia < " + in_proj;
+	cmd.append(" > /dev/null 2>&1");
+	
+	int status = 0;
+	
+	if( system(NULL) ) status = system( cmd.c_str() );
+	else {
+		
+		cout << "Cannot run system command\n";
+		exit(1);
+		
+	}
+	
+	// Error handling
+	if( status == 512 ) {
+		
+		cout << "Check that Gosia runs correctly\n";
+		exit(1);
+		
+	}
+	
+	else if( status == 2 ) {
+		
+		cout << "Killed!\n";
+		exit( status );
+		
+	}
+	
+	else chisq_proj = ReadChiSqFromFile( out_proj );
+	
+	return 1;
+	
+}
+
+int GetChiSq2( string in_proj, string in_targ, double &chisq_proj, double &chisq_targ ) {
 	
 	string out_proj = in_proj.substr( 0, in_proj.find_last_of(".") );
 	string out_targ = in_targ.substr( 0, in_targ.find_last_of(".") );
 	out_proj += ".out";
 	out_targ += ".out";
-
+	
 	string cmd = "gosia2 < " + in_proj;
 	cmd.append(" > /dev/null 2>&1");
-
-	if( system(NULL) ) system( cmd.c_str() );
+	
+	int status = 0;
+	
+	// Run gosia with system command
+	if( system(NULL) ) status = system( cmd.c_str() );
 	else {
+		
 		cout << "Cannot run system command\n";
 		return 0;
+		
 	}
 	
-	chisq_proj = ReadChiSqFromFile( out_proj );
-	chisq_targ = ReadChiSqFromFile( out_targ );
-
+	// Error handling
+	if( status == 512 ) {
+		
+		cout << "Check that Gosia2 runs correctly\n";
+		exit(1);
+		
+	}
+	
+	else if( status == 2 ) {
+		
+		cout << "Killed!\n";
+		exit( status );
+		
+	}
+	
+	else {
+		
+		chisq_proj = ReadChiSqFromFile( out_proj );
+		chisq_targ = ReadChiSqFromFile( out_targ );
+		
+	}
+	
 	return 1;
 	
 }
 
-int IntegrateProjectile( string in_proj ) {
+int IntegrateProjectile( string intifile ) {
 
-	string intifile = in_proj.substr( 0, in_proj.find_last_of(".") );
-	intifile += ".INTI.inp";
-	
 	string line, cmd;
 	
 	ifstream inti;
@@ -165,35 +283,37 @@ int IntegrateProjectile( string in_proj ) {
 	}
 	
 	cmd.append( intifile );
-	cmd.append(" > /dev/null 2>&1" );
+	cmd.append( " > /dev/null 2>&1" );
 	
 	if( system(NULL) ) system( cmd.c_str() );
 	else {
+		
 		cout << "Cannot run system command\n";
 		return 0;
+		
 	}
 
 	return 1;
 	
 }
 
-int WriteMatrixElementsToFile( string in_proj, string in_targ, double tme, double dme, int tme_index, int dme_index ) {
-
+int WriteProjectileMatrixElementsToFile( string in_proj, float tme, float dme, int tme_index, int dme_index ) {
+	
 	string mename, litname;
 	ofstream mefile;
 	ifstream litfile;
 	string cmd;
 	double tmp;
 	int index = 1;
-
+	
 	// Projectile matrix elements
 	mename = in_proj.substr( 0, in_proj.find_last_of(".") );
 	mename += ".bst";
 	litname = mename + ".lit";
-
+	
 	mefile.open( mename.c_str(), ios::out );
 	if( !mefile.is_open() ) return 1;
-
+	
 	litfile.open( litname.c_str(), ios::in );
 	if( !litfile.is_open() ) return 1;
 	
@@ -212,17 +332,28 @@ int WriteMatrixElementsToFile( string in_proj, string in_targ, double tme, doubl
 			mefile << tmp << endl;	// write to file if there is a next value
 			litfile >> tmp;	 // continue reading
 		}
-		index++; // increment matrix element index 		
+		index++; // increment matrix element index
 	}
 	
 	mefile.close();
 	litfile.close();
+	
+	return 0;
+	
+}
+
+int WriteTargetMatrixElementsToFile( string in_targ, float tme, float dme, int tme_index, int dme_index ) {
+	
+	string mename, litname;
+	ofstream mefile;
+	ifstream litfile;
+	string cmd;
 
 	// Target matrix elements, copy from backup file
 	mename = in_targ.substr( 0, in_targ.find_last_of(".") );
 	mename += ".bst";
 	litname = mename + ".lit";
-
+	
 	litfile.open( litname.c_str(), ios::in );
 	if( !litfile.is_open() ) return 2;
 	else litfile.close();
@@ -230,9 +361,9 @@ int WriteMatrixElementsToFile( string in_proj, string in_targ, double tme, doubl
 	cmd = "cp " + litname + " " + mename;
 	if( system(NULL) ) system( cmd.c_str() );
 	else return 2;
-
+	
 	return 0;
-
+	
 }
 
 
@@ -255,6 +386,8 @@ void PrintUsage( char* progname ) {
 	cout << "If \"-dN\" is included at the end, where N is the index of the diagonal matrix\n";
 	cout << "element other than the default 2, then correct lines of the .bst/.bst.lit\n";
 	cout << "files will be read/written.\n";
+	cout << "Switch between Gosia and Gosia2 using the -g1 or -g2 flags\n";
+	cout << "Gosia2 (-g2) is the default. Overwrite with -g1 for standard Gosia.\n";
 
 	return;
 	
@@ -263,120 +396,271 @@ void PrintUsage( char* progname ) {
 int main( int argc, char* argv[] ) {
 	
 	// If the number of arguments are wrong, exit with usage
-	if( argc < 2 || argc > 14 ) {
+	if( argc < 2 ) {
 		
 		PrintUsage(argv[0]);
-		return 0;
+		exit(1);
 	
 	}
 	
 	// Get/Set arguments
-	stringstream arg ( stringstream::in | stringstream::out );
-	stringstream tmp ( stringstream::in | stringstream::out );
-
 	string in_proj, in_targ;
+	string intifile;
 	int Ndata_proj = 3;
 	int Ndata_targ = 5;
-	double low_tme = 0.1;
-	double upp_tme = 2.5;
+	float low_tme = 0.1;
+	float upp_tme = 2.5;
 	int Nsteps_tme = 51;
-	double low_dme = 0.0;
-	double upp_dme = 0.0;
+	float low_dme = 0.0;
+	float upp_dme = 0.0;
 	int Nsteps_dme = 1;
 	bool cont = false;
 	bool read = false;
-	int tme_index = 1; // default, index 1
-	int dme_index = 2; // default, index 2
+	bool g2 = true;		// default, gosia2
+	int tme_index = 1;	// default, index 1
+	int dme_index = 2;	// default, index 2
 	
-	if( argc >= 2 ) {
-		arg.str("");
-		arg.clear();
-		arg << argv[1];
-		arg >> in_proj;
-	}
-	if( argc >= 3 ) {
-		arg.str("");
-		arg.clear();
-		arg << argv[2];
-		arg >> in_targ;
-	}
-	if( argc >= 4 ) {
-		arg.str("");
-		arg.clear();
-		arg << argv[3];
-		arg >> Ndata_proj;
-	}
-	if( argc >= 5 ) {
-		arg.str("");
-		arg.clear();
-		arg << argv[4];
-		arg >> Ndata_targ;
-	}
-	if( argc >= 6 ) {
-		arg.str("");
-		arg.clear();
-		arg << argv[5];
-		arg >> low_tme;
-	}
-	if( argc >= 7 ) {
-		arg.str("");
-		arg.clear();
-		arg << argv[6];
-		arg >> upp_tme;
-	}
-	if( argc >= 8 ) {
-		arg.str("");
-		arg.clear();
-		arg << argv[7];
-		arg >> Nsteps_tme;
-	}
-	if( argc >= 9 ) {
-		arg.str("");
-		arg.clear();
-		arg << argv[8];
-		arg >> low_dme;
-	}
-	if( argc >= 10 ) {
-		arg.str("");
-		arg.clear();
-		arg << argv[9];
-		arg >> upp_dme;
-	}
-	if( argc >= 11 ) {
-		arg.str("");
-		arg.clear();
-		arg << argv[10];
-		arg >> Nsteps_dme;
-	}
-	if( argc >= 12 ) {
-		for ( int i = 11; i < argc; i++ ) {
-			arg.str("");
-			arg.clear();
-			arg << argv[i];
-			if ( arg.str() == "cont" ) cont = true;
-			else if ( arg.str() == "read" ) read = true;
-			else if ( arg.str().substr(0,2) == "-t" ) {
-				tmp.str("");
-				tmp.clear();
-				tmp << arg.str().substr(2,arg.str().size()-2);
-				tmp >> tme_index;
-				cout << "Transitional matrix element, index " << tme_index << endl;
-			}
-			else if ( arg.str().substr(0,2) == "-d" ) {
-				tmp.str("");
-				tmp.clear();
-				tmp << arg.str().substr(2,arg.str().size()-2);
-				tmp >> dme_index;
-				cout << "Diagonal matrix element, index " << dme_index << endl;
-			}
-		}
-	}
-	
-	if( read && cont ){
-		cout << "Cannot declare \"read\" and \"cont\"... Pick one.\n";
-		return 0;
-	}
+	// Options parser
+	try {
 		
+		cxxopts::Options options( "chisqsurface",
+							 "Program to create 2-dimensional chi^2 surfaces with Gosia/Gosia2" );
+	
+		options.add_options()
+		( "m,mini", "OP,MINI file", cxxopts::value<string>(), "filename" )
+		( "i,inti", "OP,INTI file", cxxopts::value<string>(), "filename" )
+		( "np", "Number of projectile data", cxxopts::value<int>(), "N" )
+		( "nt", "Number of target data", cxxopts::value<int>(), "N" )
+		( "x,x-index", "Index of x-axis matrix element", cxxopts::value<int>(), "X" )
+		( "y,y-index", "Index of y-axis matrix element", cxxopts::value<int>(), "Y" )
+		( "nx", "Number of steps in the x-axis matrix element", cxxopts::value<int>(), "N" )
+		( "ny", "Number of steps in the y-axis matrix element", cxxopts::value<int>(), "N" )
+		( "x-low", "Lower limit for x-axis matrix element", cxxopts::value<float>(), "value" )
+		( "x-upp", "Upper limit for x-axis matrix element", cxxopts::value<float>(), "value" )
+		( "y-low", "Lower limit for y-axis matrix element", cxxopts::value<float>(), "value" )
+		( "y-upp", "Upper limit for y-axis matrix element", cxxopts::value<float>(), "value" )
+		( "g1", "Standard Gosia selector" )
+		( "g2", "Gosia2 selector (default)" )
+		( "h,help", "Print help" )
+		( "r,read", "Read previous results and continue" )
+		( "c,cont", "Continue previous calculation (use read instead!)" )
+		;
+		
+		options.parse_positional( { "mini", "np" } );
+		
+		auto result = options.parse(argc, argv);
+		
+		// Do help
+		if( result.count("help") ) {
+			
+			cout << options.help({""}) << endl;
+			return 0;
+			
+		}
+
+		
+		// Input files - OP,MINI
+		if( result.count("m") ) {
+			
+			in_proj = result["m"].as<string>();
+			
+		}
+		
+		else {
+			
+			cout << "OP,MINI file must be given with option -m\n";
+			return 1;
+			
+		}
+
+		// Input files - OP,INTI
+		if( result.count("i") ) {
+			
+			intifile = result["i"].as<string>();
+			
+		}
+		
+		else {
+			
+			intifile = in_proj.substr( 0, in_proj.find_last_of(".") );
+			intifile += ".INTI.inp";
+			
+		}
+		
+		// Gosia or Gosia2?
+		if( result.count("g1") ) {
+			
+			g2 = false;
+			cout << "Using standard Gosia\n";
+			
+		}
+		
+		else if( result.count("g2") ) {
+			
+			g2 = true;
+			cout << "Using Gosia2\n";
+			
+		}
+
+		else {
+			
+			g2 = true;
+			cout << "Using Gosia2 as default (use --g1 to switch to standard Gosia)\n";
+			
+		}
+		
+		// Find corresponsing target file
+		if( g2 ) in_targ = FindTargetFile( in_proj );
+		if( in_targ == "empty" && g2 ) {
+			
+			cout << "Check your input files if you want to use Gosia2\n";
+			exit(1);
+			
+		}
+		
+		// Number of data - projectile
+		if( result.count("np") ) {
+			
+			Ndata_proj = result["np"].as<int>();
+			
+		}
+		
+		else {
+			
+			cout << "Please give the number of projectile data with --np=X\n";
+			exit(1);
+			
+		}
+		
+		// Number of data - target
+		if( result.count("nt") ) {
+			
+			Ndata_proj = result["np"].as<int>();
+			
+		}
+		
+		else if( !result.count("nt") && g2 ) {
+			
+			cout << "Please give the number of target data with --nt=X\n";
+			exit(1);
+			
+		}
+		
+		// Matrix element indicies - "DME" or x-axis
+		if( result.count("x") ) {
+			
+			dme_index = result["x"].as<int>();
+			cout << "Matrix element on x-axis has index = " << dme_index << endl;
+			
+		}
+		
+		else {
+			
+			cout << "Matrix element on x-axis has the default index = " << dme_index << endl;
+			
+		}
+		
+		// Matrix element indicies - "TME" or y-axis
+		if( result.count("y") ) {
+			
+			tme_index = result["y"].as<int>();
+			cout << "Matrix element on y-axis has index = " << tme_index << endl;
+			
+		}
+		
+		else {
+			
+			cout << "Matrix element on t-axis has the default index = " << tme_index << endl;
+			
+		}
+		
+		// Trap problem if scanning the same matrix element against itself!
+		if( dme_index == tme_index ) {
+			
+			cout << "Cannot scan matrix elements with index = " << dme_index << " and " << tme_index << endl;
+			exit(1);
+			
+		}
+		
+		// Matrix element limits - "DME" or x-axis
+		if( result.count("x-low") ) {
+			
+			low_dme = result["x-low"].as<float>();
+			
+		}
+		
+		if( result.count("x-upp") ) {
+			
+			upp_dme = result["x-upp"].as<float>();
+			
+		}
+		
+		// Matrix element limits - "TME" or y-axis
+		if( result.count("y-low") ) {
+
+			low_tme = result["y-low"].as<float>();
+			
+		}
+		
+		if( result.count("y-upp") ) {
+			
+			upp_tme = result["y-upp"].as<float>();
+			
+		}
+		
+		// Ranges summary
+		cout << "Scanning x-axis from " << low_dme << " to " << upp_dme << endl;
+		cout << "Scanning y-axis from " << low_tme << " to " << upp_tme << endl;
+		
+		// Number of scan steps
+		if( result.count("nx") ) {
+			
+			Nsteps_dme = result["nx"].as<int>();
+			cout << "Using " <<  Nsteps_dme << " steps in x-axis\n";
+			
+		}
+		
+		else {
+			
+			cout << "Using default number of steps in x-axis = " << Nsteps_dme << endl;
+			
+		}
+		
+		if( result.count("ny") ) {
+			
+			Nsteps_tme = result["ny"].as<int>();
+			cout << "Using " <<  Nsteps_tme << " steps in y-axis\n";
+			
+		}
+		
+		else {
+			
+			cout << "Using default number of steps in y-axis = " << Nsteps_tme << endl;
+			
+		}
+		
+		// Read or cont?
+		if( result.count("r") ) {
+			
+			read = true;
+			
+		}
+		
+		else if( result.count("c") ) {
+			
+			cont = true;
+			
+		}
+		
+	}
+	
+	catch( const cxxopts::OptionException& e ) {
+		
+		cout << "error parsing options: " << e.what() << endl;
+		exit(1);
+
+	}
+
 	// Open output text and root files
 	//  if continuing "cont" read output file first
 	//  if not, copy old files to ...old 
@@ -391,12 +675,15 @@ int main( int argc, char* argv[] ) {
 	ofstream rslt;
 	ifstream old;
 	string cmd;
+	
 	if ( cont || read ) old.open( textname[0].c_str(), ios::in );
 	else {
+		
 		outa.open( textname[0].c_str(), ios::out );
 		outb.open( textname[1].c_str(), ios::out );
 		out.push_back( &outa );
 		out.push_back( &outb );
+		
 	}
 	
 	cmd = "cp " + textname[0] + " " + textname[0] + ".old";
@@ -413,29 +700,31 @@ int main( int argc, char* argv[] ) {
 	// Initiate variables
 	int intiflag;
 	int metest;
+	int minitest;
 	bool do_calc = true;
-	double dme, tme, dme_prv, tme_prv;
+	float dme, tme, dme_prv, tme_prv;
 	double chisq = 999., chisq_proj = 999., chisq_targ = 999.;
-	double stepSize_dme = ( upp_dme - low_dme ) / (double)(Nsteps_dme-1);
-	double stepSize_tme = ( upp_tme - low_tme ) / (double)(Nsteps_tme-1);
+	float stepSize_dme = ( upp_dme - low_dme ) / (float)(Nsteps_dme-1);
+	float stepSize_tme = ( upp_tme - low_tme ) / (float)(Nsteps_tme-1);
 	if( Nsteps_dme == 1 ) stepSize_dme = 0;
 	if( Nsteps_tme == 1 ) stepSize_tme = 0;
 	
-	vector<double> result_vector;	
+	vector<float> result_vector;
 	int index;
 
 	// If continuing or reading old values, get last calculated values
 	if ( cont || read ) {
+
 		if ( old.is_open() ) {
 
 			old >> dme_prv >> tme_prv >> chisq_proj >> chisq_targ >> chisq;
 			while ( !old.eof() ) {
 
-				result_vector.push_back( (double)dme_prv );
-				result_vector.push_back( (double)tme_prv );
-				result_vector.push_back( (double)chisq_proj );
-				result_vector.push_back( (double)chisq_targ );
-				result_vector.push_back( (double)chisq );
+				result_vector.push_back( (float)dme_prv );
+				result_vector.push_back( (float)tme_prv );
+				result_vector.push_back( (float)chisq_proj );
+				result_vector.push_back( (float)chisq_targ );
+				result_vector.push_back( (float)chisq );
 
 				old >> dme_prv >> tme_prv >> chisq_proj >> chisq_targ >> chisq;
 			
@@ -460,14 +749,15 @@ int main( int argc, char* argv[] ) {
 			}
 			
 		}
+		
 		else {
 		
 			cout << "Cannot open " << textname[0].c_str() << " in order to resume\n";
 			cont = false;
 		
 		}
+		
 	}
-	
 
 	// A 2-dimensional chisq graph in root plus 1sigma cut
 	TGraph2D *gChisq = new TGraph2D( Nsteps_dme*Nsteps_tme );
@@ -529,11 +819,13 @@ int main( int argc, char* argv[] ) {
 		Nsteps_dme, low_dme-0.5*stepSize_dme, upp_dme+0.5*stepSize_dme,
 		Nsteps_tme, low_tme-0.5*stepSize_tme, upp_tme+0.5*stepSize_tme);
 
-		// Get chisq values and write to file
+	// Get chisq values and write to file
 	cout << "Ndata projectile: " << Ndata_proj << endl;
 	cout << "          target: " << Ndata_targ << endl;
 	cout << "\n\t\t  Chi-squared value\n";
-	cout << "DME\tTME\tProj\tTarg\tTotal\n";
+	if( g2 ) cout << "  x\t  y\tProj\tTarg\tTotal\n";
+	else cout << "  x\t  y\tTotal\n";
+
 	for ( int i=0; i<Nsteps_dme; i++ ) {
 	
 		dme = low_dme + i*stepSize_dme;
@@ -547,10 +839,12 @@ int main( int argc, char* argv[] ) {
 				index = LookUpOldChisq( result_vector, dme, tme );
 				if ( index < 0 ) do_calc = true;
 				else {
+					
 					chisq_proj = result_vector.at( 5*index+2 );
 					chisq_targ = result_vector.at( 5*index+3 );
 					chisq = result_vector.at( 5*index+4 );		
 					do_calc = false;
+					
 				}
 			
 			} 
@@ -587,35 +881,58 @@ int main( int argc, char* argv[] ) {
 			if ( do_calc == true ) {
 			
 				// Write matrix elements
-				metest = WriteMatrixElementsToFile( in_proj, in_targ, tme, dme, tme_index, dme_index );
-				if ( metest == 1 ) {
-					cout << "Couldn't write projectile matrix elements to file\n";
-					continue;
-				}
-//				else if ( metest == 2 ) cerr << "Couldn't copy literature target matrix elements to file\n";
+				metest = WriteProjectileMatrixElementsToFile( in_proj, tme, dme, tme_index, dme_index );
+				if( g2 )
+					metest = WriteTargetMatrixElementsToFile( in_targ, tme, dme, tme_index, dme_index );
 
-				// Integration step
-				intiflag = IntegrateProjectile( in_proj );
-				
-				// Run gosia and return chisq values
-				if ( GetChiSq( in_proj, in_targ, chisq_proj, chisq_targ ) == 0 ) {
-					cout << "Unable to run gosia2\n";
-					continue;
+				if ( metest == 1 ) {
+					
+					cout << "Couldn't write projectile matrix elements to file\n";
+					exit(1);
+					
 				}
+
+				if ( metest == 2 ) {
+					
+					cout << "Couldn't write target matrix elements to file\n";
+					exit(1);
+					
+				}
+				
+				// Integration step
+				intiflag = IntegrateProjectile( intifile );
+				
+				// Run Gosia2 or standard Gosia and return chisq values
+				if( g2 )
+					minitest = GetChiSq2( in_proj, in_targ, chisq_proj, chisq_targ );
+
+				else
+					minitest = GetChiSq( in_proj, chisq_proj );
+					
+				if ( minitest == 0 ) {
+					
+					cout << "Unable to run gosia\n";
+					exit(1);
+
+				}
+				
 				chisq_proj *= Ndata_proj;
 				chisq_targ *= Ndata_targ;
-				chisq = chisq_proj + chisq_targ;
+				
+				if( g2 ) chisq = chisq_proj + chisq_targ;
+				else chisq = chisq_proj;
 			
 			}
 	
 			// Print to terminal
-			cout << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
+			if( g2 ) cout << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
+			else cout << chisq << endl;
 
 			// Print to file
 			for ( int k = 0; k < 2; k++ ) {
 				
-				(*out[k]) << dme << "\t" << tme << "\t" << chisq_proj << "\t";
-				(*out[k]) << chisq_targ << "\t" << chisq << endl;
+				(*out[k]) << dme << "\t" << tme << "\t";
+				(*out[k]) << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
 				
 			}
 			
@@ -652,7 +969,8 @@ int main( int argc, char* argv[] ) {
 		Nsteps_dme, low_dme-0.5*stepSize_dme, upp_dme+0.5*stepSize_dme,
 		Nsteps_tme, low_tme-0.5*stepSize_tme, upp_tme+0.5*stepSize_tme);
 
-	double tme_tmp, dme_tmp, chisq_tmp;
+	float tme_tmp, dme_tmp;
+	double chisq_tmp;
 	int ctr1 = 0, ctr2 = 0, ctr3 = 0, ctr4 = 0;
 	for( int p = 0; p < Nsteps_dme; p++ ) {
 
@@ -700,8 +1018,8 @@ int main( int argc, char* argv[] ) {
 	}
 	
 	hChisq->GetMinimumBin(ix,iy,iz);
-	double dme_min = hChisq->GetXaxis()->GetBinCenter(ix);
-	double tme_min = hChisq->GetYaxis()->GetBinCenter(iy);
+	float dme_min = hChisq->GetXaxis()->GetBinCenter(ix);
+	float tme_min = hChisq->GetYaxis()->GetBinCenter(iy);
 
 	double tme_err_low[2], dme_err_low[2];
 	double tme_err_upp[2], dme_err_upp[2];

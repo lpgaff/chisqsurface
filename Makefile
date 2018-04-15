@@ -29,5 +29,6 @@ all: chisqsurface
 
 chisqsurface:  chisqsurface.cpp
 # -----------------------------------------------------------------------------
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LIBS) $< -o $(BINDIR)/$@
+	mkdir -p $(BINDIR)
+	$(CXX) $(CXXFLAGS) $< -o $(BINDIR)/$@ $(LDFLAGS) $(LIBS) 
 

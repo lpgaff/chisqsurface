@@ -56,22 +56,30 @@ FILE FORMAT AND PREPARATION
 
 For the code to work, Gosia or Gosia2 should be prepared in such a way that they can be executed at the OP,MINI stage. That is to say that the integration step, 'OP,INTI', and the q-parameter map step, 'OP,MAP', must be run for both the projectile (and target files if using Gosia2). Keeping these filenames in the same format as input file is useful.
 
-Similarly, the output files must follow this convention with the ".out" prefix. This is so the code can read the chi2 value from the output files. The code will soon read the input files to check the correct output filename in each case, so this will be redundant/flexible soon.
-
-The Gosia/Gosia2 files for the projectile and target must be ready for the 'OP,MINI' step with the OP,REST command and NTAP=4. Matrix elements files should follow the same naming convention as the input file with the ".bst" extension and a backup copy with the ".bst.lit" extension to allow the code to reset the matrix elements for each calculation. Again, this could be a command line option in the future to change this.
+The Gosia/Gosia2 files for the projectile and target must be ready for the 'OP,MINI' step with the OP,REST command and NTAP=4. Matrix elements files should have a copy with the same name and an additional ".lit" extension to allow the code to reset the matrix elements for each calculation.
 
 The OP,MINI command should also be tweaked to allow the printing of the chisq value immediately, without any time consuming minimisation in the projectile. This is done by setting the chisq criterion (the third value of the input) to a very high number, e.g:
 
 ```
+OP,REST
+0,0
 OP,MINI
  2100,2,99999999.,.0001,1.1,1,10,1,1,0.0001
 OP,EXIT
 ```
 
-This should not be done for the target, where a certain amount of minimisation should be allowed, say 20 steps, with a reasonable chisq condition of ~0.001.
+This should not be done for the target in a Gosia2 calculation, where a certain amount of minimisation should be allowed, say 20 steps, with a reasonable chisq condition of ~0.001.
+If making a full correlated error analysis using standard Gosia, then you will also want to perform a full minimisation at each step, but the matrix elements of interest should then be fixed in the ME section. This can be done by setting the lower and upper limits to be equal (as per the Gosia manual).
 
-In order to run the integration step for each point on the surface, you must have an OP,INTI file in the same directory. If your input file is named "example.inp", then your integration file should be named "example.INTI.inp" so that the code can run the integration step for each meshpoint. If it is named something different, it must be specified on the command line using the `-i` or `--inti` option.
-An example case is attached for 202Rn on 109Ag. If it doesn't exist at all (or you specify `--inti=dummy`), then the integration is skipped.
+```
+OP,REST
+0,0
+OP,MINI
+2100,100,0.00001, 0.0000001, 1.1, 1, 0, 1, , 0.0001
+OP,EXIT
+```
+
+In order to run the integration step for each point on the surface, you must have an OP,INTI file in the same directory. If your input file is named "example.inp", then your integration file should be named "example.INTI.inp" so that the code can run the integration step for each meshpoint. If it is named something different, it must be specified on the command line using the `-i` or `--inti` option. If it doesn't exist at all (or you specify `--inti=dummy`), then the integration is skipped.
 
 
 OUTPUT

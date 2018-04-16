@@ -82,66 +82,65 @@ int LookUpOldChisq( const vector<float>& vec, float dme, float tme ) {
 
 }
 
-string FindTargetFile( string in_proj ) {
+string FindFileName( string in_file, string tape ) {
 	
-	// Open gosia input file for projectile and find the target name
-	ifstream g2in;
-	g2in.open( in_proj.c_str(), ios::in );
-	if( !g2in.is_open() ) {
+	// Open gosia input file for projectile and find the output file name
+	ifstream gin;
+	gin.open( in_file.c_str(), ios::in );
+	if( !gin.is_open() ) {
 		
-		cout << "Unable to open " << in_proj << endl;
-		return "empty";
+		cout << "Unable to open " << in_file << endl;
+		exit(1);
 		
 	}
 	
-	// Search for tape 26
+	// Search for tape 26 (or other)
 	bool flag1 = false;
 	bool flag2 = false;
 	string line1, line2, tmp;
 	string qry1 = "OP,FILE";
-	string qry2 = "26";
-	string qry3 = "OP,";
-	string in_targ = "empty";
+	string qry2 = "OP,";
+	string filename = "empty";
  
-	getline( g2in,line1 );
-	while ( !g2in.eof() && !flag1 ) {
+	getline( gin,line1 );
+	while ( !gin.eof() && !flag1 ) {
 		
 		if( line1.compare( 0, qry1.size(), qry1 ) == 0 )
 			flag1 = true;
 		
-		getline( g2in, line1 );
+		getline( gin, line1 );
 		
 	}
 	
-	getline( g2in, line2 );
-	while( !g2in.eof() && !flag2 ) {
+	getline( gin, line2 );
+	while( !gin.eof() && !flag2 ) {
 		
-		if( line1.compare( 0, qry3.size(), qry3 ) == 0 ||
-		   line2.compare( 0, qry3.size(), qry3 ) == 0 ) {
+		if( line1.compare( 0, qry2.size(), qry2 ) == 0 ||
+		   line2.compare( 0, qry2.size(), qry2 ) == 0 ) {
 			
 			break;
 			
 		}
-
-		if( line1.compare( 0, qry2.size(), qry2 ) == 0 ) {
+		
+		if( line1.compare( 0, tape.size(), tape ) == 0 ) {
 			
-			in_targ = line2;
+			filename = line2;
 			flag2 = true;
 			
 		}
-
-		getline( g2in, line1 );
-		getline( g2in, line2 );
+		
+		getline( gin, line1 );
+		getline( gin, line2 );
 		
 	}
 	
-	g2in.close();
+	gin.close();
 	
-	if( !flag1 ) cout << "Couldn't find OP,FILE in " << in_proj << endl;
-	if( !flag2 ) cout << "Couldn't find tape number 26 in " << in_proj << endl;
-	else cout << "Found corresponding target file: " << in_targ << endl;
+	if( !flag1 ) cout << "Couldn't find OP,FILE in " << in_file << endl;
+	if( !flag2 ) cout << "Couldn't find tape number " << tape << " in " << in_file << endl;
+	else cout << "Found tape number " << tape << ": " << filename << endl;
 	
-	return in_targ;
+	return filename;
 	
 }
 
@@ -166,13 +165,16 @@ double ReadChiSqFromFile( string gosiaoutfile ) {
  
 	getline(g2out,line);
 	while ( !g2out.eof() ) {
+		
 		getline( g2out, line );
 		if( line.compare( 0, qry.size(), qry ) == 0 ) {
+			
 			gosia_chisq.str("");
 			gosia_chisq.clear();
 			gosia_chisq << line.substr( qry.size(), qry.size()+15 );
 			gosia_chisq >> chisq;
 			flag = true;
+			
 		}
 	}
 	
@@ -184,10 +186,7 @@ double ReadChiSqFromFile( string gosiaoutfile ) {
 
 }
 
-int GetChiSq( string in_proj, double &chisq_proj ) {
-	
-	string out_proj = in_proj.substr( 0, in_proj.find_last_of(".") );
-	out_proj += ".out";
+int GetChiSq( string in_proj, string out_proj, double &chisq_proj ) {
 	
 	string cmd = "gosia < " + in_proj;
 	cmd.append(" > /dev/null 2>&1");
@@ -223,12 +222,7 @@ int GetChiSq( string in_proj, double &chisq_proj ) {
 	
 }
 
-int GetChiSq2( string in_proj, string in_targ, double &chisq_proj, double &chisq_targ ) {
-	
-	string out_proj = in_proj.substr( 0, in_proj.find_last_of(".") );
-	string out_targ = in_targ.substr( 0, in_targ.find_last_of(".") );
-	out_proj += ".out";
-	out_targ += ".out";
+int GetChiSq2( string in_proj, string out_proj, string out_targ, double &chisq_proj, double &chisq_targ ) {
 	
 	string cmd = "gosia2 < " + in_proj;
 	cmd.append(" > /dev/null 2>&1");
@@ -305,9 +299,9 @@ int IntegrateProjectile( string intifile ) {
 	
 }
 
-int WriteProjectileMatrixElementsToFile( string in_proj, float tme, float dme, int tme_index, int dme_index ) {
+int WriteProjectileMatrixElementsToFile( string bst_proj, float tme, float dme, int tme_index, int dme_index ) {
 	
-	string mename, litname;
+	string litname;
 	ofstream mefile;
 	ifstream litfile;
 	string cmd;
@@ -315,11 +309,9 @@ int WriteProjectileMatrixElementsToFile( string in_proj, float tme, float dme, i
 	int index = 1;
 	
 	// Projectile matrix elements
-	mename = in_proj.substr( 0, in_proj.find_last_of(".") );
-	mename += ".bst";
-	litname = mename + ".lit";
+	litname = bst_proj + ".lit";
 	
-	mefile.open( mename.c_str(), ios::out );
+	mefile.open( bst_proj.c_str(), ios::out );
 	if( !mefile.is_open() ) return 1;
 	
 	litfile.open( litname.c_str(), ios::in );
@@ -328,19 +320,30 @@ int WriteProjectileMatrixElementsToFile( string in_proj, float tme, float dme, i
 	litfile >> tmp; // read first me value
 	
 	while ( !litfile.eof() ) {
+		
 		if ( index == tme_index ) {
+			
 			mefile << tme << endl; // write current dme
 			litfile >> tmp; // dump initial tme value and read next one
+			
 		}
+		
 		else if ( index == dme_index ) {
+			
 			mefile << dme << endl; // write current dme
 			litfile >> tmp; // dump initial dme value and read next one
+			
 		}
+		
 		else {
+			
 			mefile << tmp << endl;	// write to file if there is a next value
 			litfile >> tmp;	 // continue reading
+			
 		}
+		
 		index++; // increment matrix element index
+		
 	}
 	
 	mefile.close();
@@ -350,23 +353,21 @@ int WriteProjectileMatrixElementsToFile( string in_proj, float tme, float dme, i
 	
 }
 
-int WriteTargetMatrixElementsToFile( string in_targ, float tme, float dme, int tme_index, int dme_index ) {
+int WriteTargetMatrixElementsToFile( string bst_targ, float tme, float dme, int tme_index, int dme_index ) {
 	
-	string mename, litname;
+	string litname;
 	ofstream mefile;
 	ifstream litfile;
 	string cmd;
 
 	// Target matrix elements, copy from backup file
-	mename = in_targ.substr( 0, in_targ.find_last_of(".") );
-	mename += ".bst";
-	litname = mename + ".lit";
+	litname = bst_targ + ".lit";
 	
 	litfile.open( litname.c_str(), ios::in );
 	if( !litfile.is_open() ) return 2;
 	else litfile.close();
 	
-	cmd = "cp " + litname + " " + mename;
+	cmd = "cp " + litname + " " + bst_targ;
 	if( system(NULL) ) system( cmd.c_str() );
 	else return 2;
 	
@@ -413,7 +414,9 @@ int main( int argc, char* argv[] ) {
 	
 	// Get/Set arguments
 	string in_proj, in_targ;
+	string out_proj, out_targ;
 	string intifile;
+	string bst_proj, bst_targ;
 	int Ndata_proj = 3;
 	int Ndata_targ = 5;
 	float low_tme = 0.1;
@@ -518,13 +521,21 @@ int main( int argc, char* argv[] ) {
 		}
 		
 		// Find corresponsing target file
-		if( g2 ) in_targ = FindTargetFile( in_proj );
+		if( g2 ) in_targ = FindFileName( in_proj, "26" );
 		if( in_targ == "empty" && g2 ) {
 			
 			cout << "Check your input files if you want to use Gosia2\n";
 			exit(1);
 			
 		}
+		
+		// Find corresponsing output files and matrix element files
+		out_proj = FindFileName( in_proj, "22" );
+		out_targ = FindFileName( in_targ, "22" );
+		bst_proj = FindFileName( in_proj, "12" );
+		bst_targ = FindFileName( in_targ, "32" );
+		if( out_proj == "empty" || out_targ == "empty" ||
+		   bst_proj == "empty" || bst_targ == "empty" ) exit(1);
 		
 		// Number of data - projectile
 		if( result.count("np") ) {
@@ -889,33 +900,27 @@ int main( int argc, char* argv[] ) {
 			if ( do_calc == true ) {
 			
 				// Write matrix elements
-				metest = WriteProjectileMatrixElementsToFile( in_proj, tme, dme, tme_index, dme_index );
+				metest = WriteProjectileMatrixElementsToFile( bst_proj, tme, dme, tme_index, dme_index );
 				if( g2 )
-					metest = WriteTargetMatrixElementsToFile( in_targ, tme, dme, tme_index, dme_index );
+					metest = WriteTargetMatrixElementsToFile( bst_targ, tme, dme, tme_index, dme_index );
 
-				if ( metest == 1 ) {
-					
+				if( metest == 1 )
 					cout << "Couldn't write projectile matrix elements to file\n";
-					exit(1);
-					
-				}
 
-				if ( metest == 2 ) {
-					
+				if( metest == 2 )
 					cout << "Couldn't write target matrix elements to file\n";
-					exit(1);
-					
-				}
+				
+				if( metest > 0 ) exit(1);
 				
 				// Integration step
 				intiflag = IntegrateProjectile( intifile );
 				
 				// Run Gosia2 or standard Gosia and return chisq values
 				if( g2 )
-					minitest = GetChiSq2( in_proj, in_targ, chisq_proj, chisq_targ );
+					minitest = GetChiSq2( in_proj, out_proj, out_targ, chisq_proj, chisq_targ );
 
 				else
-					minitest = GetChiSq( in_proj, chisq_proj );
+					minitest = GetChiSq( in_proj, out_proj, chisq_proj );
 					
 				if ( minitest == 0 ) {
 					

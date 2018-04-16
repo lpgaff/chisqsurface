@@ -531,9 +531,9 @@ int main( int argc, char* argv[] ) {
 		
 		// Find corresponsing output files and matrix element files
 		out_proj = FindFileName( in_proj, "22" );
-		out_targ = FindFileName( in_targ, "22" );
+		if( g2 ) out_targ = FindFileName( in_targ, "22" );
 		bst_proj = FindFileName( in_proj, "12" );
-		bst_targ = FindFileName( in_targ, "32" );
+		if( g2 ) bst_targ = FindFileName( in_targ, "32" );
 		if( out_proj == "empty" || out_targ == "empty" ||
 		   bst_proj == "empty" || bst_targ == "empty" ) exit(1);
 		

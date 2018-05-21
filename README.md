@@ -1,5 +1,6 @@
-chisqsurface
-============
+chisqsurface 
+[![DOI](https://zenodo.org/badge/19616357.svg)](https://zenodo.org/badge/latestdoi/19616357)
+========================
 
 DESCRIPTION
 -----------
@@ -104,3 +105,4 @@ gosia < 202Rn_6Ag.MAP.inp
 ```
 chisqsurface -m 202Rn_6Ag.inp -i 202Rn_6Ag.INTI.inp  --np=6 --nt=21 --x-low=-1.5 --x-upp=1.5 --nx=7 --y-low=0.5 --y-upp=1.5 --ny=11 --x-index=3 --y-index=1
 ```
+

@@ -536,7 +536,7 @@ int main( int argc, char* argv[] ) {
 		if( g2 ) bst_targ = FindFileName( in_targ, "32" );
 		if( out_proj == "empty" || out_targ == "empty" ||
 		   bst_proj == "empty" || bst_targ == "empty" ) exit(1);
-		
+
 		// Number of data - projectile
 		if( result.count("np") ) {
 			
@@ -554,7 +554,7 @@ int main( int argc, char* argv[] ) {
 		// Number of data - target
 		if( result.count("nt") ) {
 			
-			Ndata_proj = result["np"].as<int>();
+			Ndata_proj = result["nt"].as<int>();
 			
 		}
 		

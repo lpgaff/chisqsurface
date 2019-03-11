@@ -554,7 +554,7 @@ int main( int argc, char* argv[] ) {
 		// Number of data - target
 		if( result.count("nt") ) {
 			
-			Ndata_proj = result["nt"].as<int>();
+			Ndata_targ = result["nt"].as<int>();
 			
 		}
 		

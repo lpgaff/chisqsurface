@@ -186,18 +186,23 @@ double ReadChiSqFromFile( string gosiaoutfile ) {
 
 }
 
-int GetChiSq( string in_proj, string out_proj, double &chisq_proj ) {
+int GetChiSq( string in_proj, string out_proj, double &chisq_proj, int Nmini ) {
 	
 	string cmd = "gosia < " + in_proj;
 	cmd.append(" > /dev/null 2>&1");
 	
 	int status = 0;
 	
-	if( system(NULL) ) status = system( cmd.c_str() );
-	else {
+	// Run gosia Nmini times with system command
+	for( int i = 0; i < Nmini; i++ ) {
 		
-		cout << "Cannot run system command\n";
-		exit(1);
+		if( system(NULL) ) status = system( cmd.c_str() );
+		else {
+			
+			cout << "Cannot run system command\n";
+			exit(1);
+			
+		}
 		
 	}
 	
@@ -222,19 +227,23 @@ int GetChiSq( string in_proj, string out_proj, double &chisq_proj ) {
 	
 }
 
-int GetChiSq2( string in_proj, string out_proj, string out_targ, double &chisq_proj, double &chisq_targ ) {
+int GetChiSq2( string in_proj, string out_proj, string out_targ, double &chisq_proj, double &chisq_targ, int Nmini ) {
 	
 	string cmd = "gosia2 < " + in_proj;
 	cmd.append(" > /dev/null 2>&1");
 	
 	int status = 0;
 	
-	// Run gosia with system command
-	if( system(NULL) ) status = system( cmd.c_str() );
-	else {
+	// Run gosia Nmini times with system command
+	for( int i = 0; i < Nmini; i++ ) {
 		
-		cout << "Cannot run system command\n";
-		return 0;
+		if( system(NULL) ) status = system( cmd.c_str() );
+		else {
+			
+			cout << "Cannot run system command\n";
+			return 0;
+			
+		}
 		
 	}
 	
@@ -425,6 +434,7 @@ int main( int argc, char* argv[] ) {
 	float low_dme = 0.0;
 	float upp_dme = 0.0;
 	int Nsteps_dme = 1;
+	int Nmini = 1;
 	bool cont = false;
 	bool read = false;
 	bool g2 = true;		// default, gosia2
@@ -450,6 +460,7 @@ int main( int argc, char* argv[] ) {
 		( "x-upp", "Upper limit for x-axis matrix element", cxxopts::value<float>(), "value" )
 		( "y-low", "Lower limit for y-axis matrix element", cxxopts::value<float>(), "value" )
 		( "y-upp", "Upper limit for y-axis matrix element", cxxopts::value<float>(), "value" )
+		( "nm", "Number of minimisation calls per step", cxxopts::value<int>(), "N" )
 		( "g1", "Standard Gosia selector" )
 		( "g2", "Gosia2 selector (default)" )
 		( "h,help", "Print help" )
@@ -658,6 +669,20 @@ int main( int argc, char* argv[] ) {
 			
 		}
 		
+		// Number of minimisations per step
+		if( result.count("nm") ) {
+		
+			Nmini = result["nm"].as<int>();
+			cout << "Using " << Nmini << " minimisations per step" << endl;
+
+		}
+		
+		else {
+			
+			cout << "Using default number of minimisations per step (nm = " << Nmini << ")" << endl;
+			
+		}
+
 		// Read or cont?
 		if( result.count("r") ) {
 			
@@ -917,10 +942,10 @@ int main( int argc, char* argv[] ) {
 				
 				// Run Gosia2 or standard Gosia and return chisq values
 				if( g2 )
-					minitest = GetChiSq2( in_proj, out_proj, out_targ, chisq_proj, chisq_targ );
+					minitest = GetChiSq2( in_proj, out_proj, out_targ, chisq_proj, chisq_targ, Nmini );
 
 				else
-					minitest = GetChiSq( in_proj, out_proj, chisq_proj );
+					minitest = GetChiSq( in_proj, out_proj, chisq_proj, Nmini );
 					
 				if ( minitest == 0 ) {
 					

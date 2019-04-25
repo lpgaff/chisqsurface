@@ -293,10 +293,12 @@ int IntegrateProjectile( string intifile ) {
 		
 	}
 	
+	int status = 0;
+	
 	cmd.append( intifile );
 	cmd.append( " > /dev/null 2>&1" );
 	
-	if( system(NULL) ) system( cmd.c_str() );
+	if( system(NULL) ) status = system( cmd.c_str() );
 	else {
 		
 		cout << "Cannot run system command\n";
@@ -304,6 +306,21 @@ int IntegrateProjectile( string intifile ) {
 		
 	}
 
+	// Error handling
+	if( status == 512 ) {
+		
+		cout << "Check that Gosia2 runs correctly\n";
+		exit(1);
+		
+	}
+	
+	else if( status == 2 ) {
+		
+		cout << "Killed!\n";
+		exit( status );
+		
+	}
+	
 	return 1;
 	
 }
@@ -939,6 +956,13 @@ int main( int argc, char* argv[] ) {
 				
 				// Integration step
 				intiflag = IntegrateProjectile( intifile );
+				
+				if( intiflag == 2 ) {
+					
+					cout << "\nKill signal recieved" << endl;
+					return 2;
+					
+				}
 				
 				// Run Gosia2 or standard Gosia and return chisq values
 				if( g2 )

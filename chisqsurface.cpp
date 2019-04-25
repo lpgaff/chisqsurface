@@ -954,6 +954,13 @@ int main( int argc, char* argv[] ) {
 
 				}
 				
+				else if ( minitest == 2 ) {
+					
+					cout << "\nKill signal recieved" << endl;
+					return 2;
+					
+				}
+				
 				chisq_proj *= Ndata_proj;
 				chisq_targ *= Ndata_targ;
 				

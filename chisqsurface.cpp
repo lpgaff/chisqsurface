@@ -600,7 +600,7 @@ int main( int argc, char* argv[] ) {
 		
 		else {
 			
-			cout << "Matrix element on t-axis has the default index = " << tme_index << endl;
+			cout << "Matrix element on y-axis has the default index = " << tme_index << endl;
 			
 		}
 		

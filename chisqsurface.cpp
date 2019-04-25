@@ -957,13 +957,6 @@ int main( int argc, char* argv[] ) {
 				// Integration step
 				intiflag = IntegrateProjectile( intifile );
 				
-				if( intiflag == 2 ) {
-					
-					cout << "\nKill signal recieved" << endl;
-					return 2;
-					
-				}
-				
 				// Run Gosia2 or standard Gosia and return chisq values
 				if( g2 )
 					minitest = GetChiSq2( in_proj, out_proj, out_targ, chisq_proj, chisq_targ, Nmini );
@@ -976,13 +969,6 @@ int main( int argc, char* argv[] ) {
 					cout << "Unable to run gosia\n";
 					exit(1);
 
-				}
-				
-				else if ( minitest == 2 ) {
-					
-					cout << "\nKill signal recieved" << endl;
-					return 2;
-					
 				}
 				
 				chisq_proj *= Ndata_proj;

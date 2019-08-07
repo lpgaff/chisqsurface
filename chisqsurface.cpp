@@ -216,7 +216,7 @@ int GetChiSq( string in_proj, string out_proj, double &chisq_proj, int Nmini ) {
 	
 	else if( status == 2 ) {
 		
-		cout << "Killed!\n";
+		cout << "\nKilled!\n";
 		exit( status );
 		
 	}
@@ -257,7 +257,7 @@ int GetChiSq2( string in_proj, string out_proj, string out_targ, double &chisq_p
 	
 	else if( status == 2 ) {
 		
-		cout << "Killed!\n";
+		cout << "\nKilled!\n";
 		exit( status );
 		
 	}
@@ -316,7 +316,7 @@ int IntegrateProjectile( string intifile ) {
 	
 	else if( status == 2 ) {
 		
-		cout << "Killed!\n";
+		cout << "\nKilled!\n";
 		exit( status );
 		
 	}

@@ -401,42 +401,7 @@ int WriteTargetMatrixElementsToFile( string bst_targ, float tme, float dme, int 
 	
 }
 
-
-void PrintUsage( char* progname ) {
-
-	cout << "\nUsage: \n" << progname << " <in_proj> <in_targ> ";
-	cout << "<Ndata_proj=3> <Ndata_targ=3> <low_TME=0.1> \n";
-	cout << "   <upp_TME=2.5> <Nsteps_TME=51> <low_DME=0.0> <upp_DME=0.0> <Nsteps_DME=1>\n\n";
-	cout << " where <Ndata_proj=3> and <Ndata_targ=5> are the number of data\n";
-	cout << "for the projectile and target, respectively. This includes the\n";
-	cout << "sum of all g-ray yields, matrix elements, lifetimes, etc.\n\n";
-	cout << "Only <in_proj> and <in_targ>, the input projectile and target files ready\n";
-	cout << "for minimisation, are required. All others have default values as \n";
-	cout << "indicated in the usage.\n";
-	cout << "If \"cont\" is included at the end, then the calculation will\n";
-	cout << "continue from the last point reading other values from the .chisq file.\n";
-	cout << "If \"read\" is included at the end, then the calculation will\n";
-	cout << "check the corresponding .chisq file for previous calculations at each meshpoint\n";
-	cout << "so as not to repeat a step. This cannot be declared together with \"cont\".\n";
-	cout << "If \"-dN\" is included at the end, where N is the index of the diagonal matrix\n";
-	cout << "element other than the default 2, then correct lines of the .bst/.bst.lit\n";
-	cout << "files will be read/written.\n";
-	cout << "Switch between Gosia and Gosia2 using the -g1 or -g2 flags\n";
-	cout << "Gosia2 (-g2) is the default. Overwrite with -g1 for standard Gosia.\n";
-
-	return;
-	
-}
-
 int main( int argc, char* argv[] ) {
-	
-	// If the number of arguments are wrong, exit with usage
-	if( argc < 2 ) {
-		
-		PrintUsage(argv[0]);
-		exit(1);
-	
-	}
 	
 	// Get/Set arguments
 	string in_proj, in_targ;
@@ -507,7 +472,8 @@ int main( int argc, char* argv[] ) {
 		
 		else {
 			
-			cout << "OP,MINI file must be given with option -m\n";
+			cout << "OP,MINI file must be given with option -m.\n";
+			cout << "For help, run with the -h or --help option.\n";
 			return 1;
 			
 		}

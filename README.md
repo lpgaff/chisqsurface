@@ -53,8 +53,6 @@ The total number of calculations or chi2 data points will thus be `nx`*`ny`.
 FILE FORMAT AND PREPARATION
 ---------------------------
 
-(Update: the example and description below assumes gosia1 for the integration step. The current recommendation is to use gosia2, so this should be updated.)
-
 For the code to work, Gosia or Gosia2 should be prepared in such a way that they can be executed at the OP,MINI stage. That is to say that the integration step, 'OP,INTI', and the q-parameter map step, 'OP,MAP', must be run for both the projectile (and target files if using Gosia2). Keeping these filenames in the same format as input file is useful.
 
 The Gosia/Gosia2 files for the projectile and target must be ready for the 'OP,MINI' step with the OP,REST command and NTAP=4. Matrix elements files should have a copy with the same name and an additional ".lit" extension to allow the code to reset the matrix elements for each calculation.
@@ -82,6 +80,9 @@ OP,EXIT
 
 In order to run the integration step for each point on the surface, you must have an OP,INTI file in the same directory. If your input file is named "example.inp", then your integration file should be named "example.INTI.inp" so that the code can run the integration step for each meshpoint. If it is named something different, it must be specified on the command line using the `-i` or `--inti` option. If it doesn't exist at all (or you specify `--inti=dummy`), then the integration is skipped.
 
+FInally, you should make sure that you have a copy of your best-fit matrix elements (both the target and projectile as appropriate) in a separate file, appended by '.lit'.
+i.e. if your matrix element file is '202Rn.bst', then you need a copy of this file with the name '202Rn.bst.lit' to use as a starting point for each new iteration.
+Same goes for a target matrix element file, which may be called '109Ag.me' and your copy should then be called '109Ag.me.lit'.
 
 OUTPUT
 ------

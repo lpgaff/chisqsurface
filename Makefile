@@ -1,34 +1,47 @@
 BINDIR = ./bin
+LIBDIR = ./lib
+
+ROOTCFLAGS	:= $(shell root-config --cflags)
+ROOTLIBS	:= $(shell root-config --libs)
+ROOTVER		:= $(shell root-config --version | head -c1)
+
+ifeq ($(ROOTVER),5)
+	ROOTDICT  := rootcint
+	DICTEXT   := .h
+else
+	ROOTDICT  := rootcling
+	DICTEXT   := _rdict.pcm
+endif
 
 CXX           = $(shell root-config --cxx)
-CXXFLAGS      = $(shell root-config --cflags) -g -Wall -fPIC
-LD            = $(shell root-config --ld)
-LDFLAGS       = $(shell root-config --ldflags) -g
-LIBS          = $(shell root-config --libs)
-
-#######################################
-# -- DEFINE ARCH to something sensible!
-#######################################
-
-# -- Linux with egcs
-ifeq ($(shell uname),Linux)
-SOFLAGS       = -shared
-LDFLAGS      += -Wl,--no-as-needed
-endif
-
-# -- Mac OS X - Darwin
-ifeq ($(shell uname),Darwin)
-SOFLAGS       = -dylib
-endif
-
-
-.cpp.o:
-	$(CXX) $(CXXFLAGS) $< -o $@
+CXXFLAGS      = $(ROOTCFLAGS) -g -Wall -fPIC -I.
+LIBS          = $(ROOTLIBS)
 
 all: chisqsurface
 
-chisqsurface:  chisqsurface.cpp
-# -----------------------------------------------------------------------------
-	mkdir -p $(BINDIR)
-	$(CXX) $(CXXFLAGS) $< -o $(BINDIR)/$@ $(LDFLAGS) $(LIBS) 
+OBJECTS = scan.o \
+		  rootobjs.o \
+		  chisqsurface_dict.o
 
+DEPENDENCIES = scan.hh \
+               rootobjs.hh \
+               RootLinkDef.h
+
+chisqsurface: chisqsurface.cc $(OBJECTS)
+	mkdir -p $(BINDIR)
+	$(CXX) $(CXXFLAGS) $^ -o $(BINDIR)/$@ $(LIBS)
+
+%.o: %.cc %.hh
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+
+%_dict.o: %_dict.cc
+	$(CXX) $(CXXFLAGS) -c $<
+
+%_dict.cc: $(DEPENDENCIES)
+	$(ROOTDICT) -f $@ -c $(DEPENDENCIES)
+	cp $*_dict$(DICTEXT) $(BINDIR)/
+
+
+clean:
+	rm -f *.o *_dict.cc *$(DICTEXT)

@@ -1,3 +1,6 @@
 bin
 working_example
 *~
+*.o
+*.xcworkspace
+.DS_Store

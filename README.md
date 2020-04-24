@@ -42,7 +42,6 @@ Usage:
       --g2             Gosia2 selector (default)
   -h, --help           Print help
   -r, --read           Read previous results and continue
-  -c, --cont           Continue previous calculation (use read instead!)
 
 ```
 `np` and `nt` includes the sum of all g-ray yields, matrix elements, lifetimes, etc.
@@ -80,7 +79,7 @@ OP,EXIT
 
 In order to run the integration step for each point on the surface, you must have an OP,INTI file in the same directory. If your input file is named "example.inp", then your integration file should be named "example.INTI.inp" so that the code can run the integration step for each meshpoint. If it is named something different, it must be specified on the command line using the `-i` or `--inti` option. If it doesn't exist at all (or you specify `--inti=dummy`), then the integration is skipped.
 
-FInally, you should make sure that you have a copy of your best-fit matrix elements (both the target and projectile as appropriate) in a separate file, appended by '.lit'.
+Finally, you should make sure that you have a copy of your best-fit matrix elements (both the target and projectile as appropriate) in a separate file, appended by '.lit'.
 i.e. if your matrix element file is '202Rn.bst', then you need a copy of this file with the name '202Rn.bst.lit' to use as a starting point for each new iteration.
 Same goes for a target matrix element file, which may be called '109Ag.me' and your copy should then be called '109Ag.me.lit'.
 

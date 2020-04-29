@@ -6,16 +6,18 @@
 
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
-#include <filesystem>
+using namespace std;
+
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #ifndef __rootobjs_hh__
 #include "rootobjs.hh"
 #endif
-
-using namespace std;
 
 class scan {
 	
@@ -26,62 +28,68 @@ public:
 	~scan();
 	
 	// Lookup functions
-	int		LookUpOldChisq();
+	int		LookUpOldChisq( float dme, float tme );
 	void	ContinueScan();
 	string	FindFileName( string in_file, string tape );
 	double	ReadChiSqFromFile( string gosiaoutfile );
-	int		GetChiSq();
-	int		GetChiSq2();
+	int		GetChiSq( string dirname, float &chisq_proj );
+	int		GetChiSq2( string dirname, float &chisq_proj, float &chisq_targ );
 
 	// Execution functions
-	int		IntegrateProjectile();
-	int		WriteProjectileMatrixElementsToFile();
-	int		WriteTargetMatrixElementsToFile();
+	int		IntegrateProjectile( string dirname );
+	int		WriteProjectileMatrixElementsToFile( string dirname, float dme, float tme );
+	int		WriteTargetMatrixElementsToFile( string dirname, float dme, float tme );
 
 	// Main functions
 	void	run_scan();
-	void	do_step();
+	void	do_step( string dirname, int i, int j, float dme, float tme );
 	
 	// Getting the files
+	void	MakeScanDirectories();
 	void	GetAuxFiles();
+	void	CopyFileForScan( string filename );
 	void	OpenOutputFiles();
 	void	CloseOutputs();
+	void	CleanDirectories();
 	
 	// Some nice functions
 	string	getDateTime();
-	void	PrintStep();
+	void	PrintStep( float dme, float tme, float chisq_proj, float chisq_targ);
 	void	PrintResults();
 	
-	// Get/Set Functions
+	// Main Setup Function
 	void	SetupScan( string _in_proj, string _intifile,
-					   float _tme_index, float _dme_index,
-					   float _low_tme, float _upp_tme, int _Nsteps_tme,
+					   float _dme_index, float _tme_index,
 					   float _low_dme, float _upp_dme, int _Nsteps_dme,
+					   float _low_tme, float _upp_tme, int _Nsteps_tme,
 					   int _Ndata_proj, int _Ndata_targ,
 					   int _Nmini, int _Npara,
-					   bool _g2, bool _read, rootobjs ro );
+					   bool _g2, bool _readflag, rootobjs ro );
 
-	
-	inline void	SetMEs( float _tme, float _dme ) {
-		tme = _tme;
-		dme = _dme;
-		return;
-	};
-	
-	inline float GetChisqProj() { return chisq_proj; };
-	inline float GetChisqTarg() { return chisq_targ; };
-	
+
 private:
 	
 	// Scan Variables
+	string intifile;
 	string in_proj;
 	string in_targ;
 	string out_proj;
 	string out_targ;
-	string intifile;
 	string bst_proj;
 	string bst_targ;
-	string scandir;
+	string cor_proj;
+	string cor_targ;
+	string yld_proj;
+	string yld_targ;
+	string map_proj;
+	string map_targ;
+	string raw_proj;
+	string gdt_proj;
+
+	string scanname;
+	string maindir;
+	vector<string> scandir;
+	string tstamp;
 
 	int tme_index;
 	int dme_index;
@@ -98,7 +106,7 @@ private:
 	int Nmini;
 	int Npara;
 	bool g2;
-	bool read;
+	bool readflag;
 	
 	rootobjs ro;
 
@@ -111,17 +119,11 @@ private:
 	string rsltname;
 	string rootname;
 	
-	
-	float chisq;
-	float chisq_proj;
-	float chisq_targ;
-
 	int intiflag;
 	int metest;
 	int minitest;
 	bool do_calc;
-	float dme, tme;
-	float dme_prv, tme_prv;
+	bool no_calc;
 	float stepSize_dme;
 	float stepSize_tme;
 

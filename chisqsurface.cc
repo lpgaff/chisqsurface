@@ -235,15 +235,16 @@ int main( int argc, char* argv[] ) {
 		// Number of parallel calculations
 		if( result.count("parallel") ) {
 		
-			Nmini = result["parallel"].as<int>();
+			Npara = result["parallel"].as<int>();
 			cout << "Running " << Npara << " parallel calculations" << endl;
+			//cout << "Parallel calculations not yet implemented" << endl;
 
 		}
 
 		// Read and continue previous scan?
 		if( result.count("r") ) {
 			
-			read = true;
+			readflag = true;
 			
 		}
 
@@ -256,6 +257,9 @@ int main( int argc, char* argv[] ) {
 
 	}
 	
+	
+	// Start the timer to measure how long the scan takes
+	auto start = std::chrono::high_resolution_clock::now();
 	
 	// We need the ROOT objects to store the results of the scan
 	//cout << "ROOTing...\n";
@@ -271,10 +275,15 @@ int main( int argc, char* argv[] ) {
 		    low_dme, upp_dme, Nsteps_dme,
 			Ndata_proj, Ndata_targ,
 			Nmini, Npara,
-		    g2, read, ro );
+		    g2, readflag, ro );
 	
 	// Then actually perform the scanning procedure
 	s.run_scan();
+	
+	// Stop the timer
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	cout << "Scan took " << duration.count()/1e6 << " seconds" << endl;
 
 	return 0;
 	

@@ -8,6 +8,7 @@
 #include "rootobjs.hh"
 #endif
 
+#include <chrono>
 #include <iostream>
 #include <string>
 
@@ -26,7 +27,7 @@ float upp_dme = 0.0;
 int Nsteps_dme = 1;
 int Nmini = 1;
 int Npara = 1;		// default back to linear mode
-bool read = false;
+bool readflag = false;
 bool g2 = true;		// default, gosia2
 int tme_index = 1;	// default, index 1
 int dme_index = 2;	// default, index 2

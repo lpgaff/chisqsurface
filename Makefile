@@ -3,6 +3,7 @@ LIBDIR = ./lib
 
 ROOTCFLAGS	:= $(shell root-config --cflags)
 ROOTLIBS	:= $(shell root-config --libs)
+ROOTINC 	:= $(shell root-config --incdir)
 ROOTVER		:= $(shell root-config --version | head -c1)
 
 ifeq ($(ROOTVER),5)
@@ -13,9 +14,18 @@ else
 	DICTEXT   := _rdict.pcm
 endif
 
-CXX           = $(shell root-config --cxx)
-CXXFLAGS      = $(ROOTCFLAGS) -g -Wall -fPIC -I.
-LIBS          = $(ROOTLIBS)
+CXX      = $(shell root-config --cxx)
+CFLAGS   = $(ROOTCFLAGS) -g -Wall -fPIC -I.
+INCLUDES = -I. -I$(ROOTINC)
+LIBS     = $(ROOTLIBS)
+
+PLATFORM:=$(shell uname)
+ifeq ($(PLATFORM),Darwin)
+	export __APPLE__:= 1
+	INCLUDES += -I/opt/local/include
+	LIBS     += -L/opt/local/lib
+endif
+
 
 all: chisqsurface
 
@@ -29,17 +39,17 @@ DEPENDENCIES = scan.hh \
 
 chisqsurface: chisqsurface.cc $(OBJECTS)
 	mkdir -p $(BINDIR)
-	$(CXX) $(CXXFLAGS) $^ -o $(BINDIR)/$@ $(LIBS)
+	$(CXX) $(CFLAGS) $(INCLUDES) $^ -o $(BINDIR)/$@ $(LIBS)
 
 %.o: %.cc %.hh
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 
 %_dict.o: %_dict.cc
-	$(CXX) $(CXXFLAGS) -c $<
+	$(CXX) $(CFLAGS) $(INCLUDES) -c $<
 
 %_dict.cc: $(DEPENDENCIES)
-	$(ROOTDICT) -f $@ -c $(DEPENDENCIES)
+	$(ROOTDICT) -f $@ -c $(INCLUDES) $(DEPENDENCIES)
 	cp $*_dict$(DICTEXT) $(BINDIR)/
 
 

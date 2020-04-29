@@ -19,12 +19,12 @@ scan::~scan(){
 }
 
 void scan::SetupScan( string _in_proj, string _intifile,
-					  float _tme_index, float _dme_index,
-					  float _low_tme, float _upp_tme, int _Nsteps_tme,
+					  float _dme_index, float _tme_index,
 					  float _low_dme, float _upp_dme, int _Nsteps_dme,
+					  float _low_tme, float _upp_tme, int _Nsteps_tme,
 					  int _Ndata_proj, int _Ndata_targ,
 					  int _Nmini, int _Npara,
-					  bool _g2, bool _read, rootobjs _ro ) {
+					  bool _g2, bool _readflag, rootobjs _ro ) {
 	
 	// Assign variables for the scan
 	in_proj = _in_proj;
@@ -49,9 +49,12 @@ void scan::SetupScan( string _in_proj, string _intifile,
 	Npara = _Npara;
 
 	g2 = _g2;
-	read = _read;
+	readflag = _readflag;
 	ro = _ro;
 	
+	tstamp = getDateTime();
+
+	MakeScanDirectories();
 	GetAuxFiles();
 	OpenOutputFiles();
 
@@ -59,26 +62,163 @@ void scan::SetupScan( string _in_proj, string _intifile,
 
 }
 
+void scan::MakeScanDirectories() {
+	
+	// Return current working directory
+	char buff[PATH_MAX];
+	getcwd( buff, PATH_MAX );
+	maindir = buff;
+
+	string dirname_tmp;
+	cout << "Running in " << maindir << endl;
+
+	scanname = "scan_" + tstamp;
+	cout << "Scan outputs in " << scanname << endl;
+	mkdir( scanname.data(), 0755 );
+
+	for( int i = 0; i < Npara; ++i ){
+		
+		dirname_tmp = scanname + "/" + to_string(i);
+		mkdir( dirname_tmp.data(), 0755 );
+		scandir.push_back( dirname_tmp );
+
+	}
+	
+	return;
+	
+}
+
+void scan::CleanDirectories() {
+	
+	//cout << "Scan directories have not been deleted" << endl;
+
+	//for( int i = 0; i < scandir.size(); ++i ){
+	//
+	//	cout << "rm -rf " << scandir[i] << endl;
+	//
+	//}
+	
+	return;
+	
+}
+
 void scan::GetAuxFiles(){
 	
-	// Find corresponsing target file
-	if( g2 ) in_targ = FindFileName( in_proj, "26" );
-	if( in_targ == "empty" && g2 ) {
+	string bstlit;
+	
+	// Copy INTI and MINI files
+	CopyFileForScan( in_proj );
+	if( intifile.size() > 1 ) CopyFileForScan( intifile );
+	
+	// Detector definition files
+	raw_proj = FindFileName( in_proj, "8" );
+	gdt_proj = FindFileName( in_proj, "9" );
+	
+	if( raw_proj == "empty" || gdt_proj == "empty" ) exit(1);
+	else {
+	
+		CopyFileForScan( raw_proj );
+		CopyFileForScan( gdt_proj );
 		
-		cout << "Check your input files if you want to use Gosia2\n";
-		exit(1);
+	}
+	
+	// Projectile yield, map and matrix element files
+	yld_proj = FindFileName( in_proj, "3" );
+	cor_proj = FindFileName( in_proj, "4" );
+	map_proj = FindFileName( in_proj, "7" );
+	bst_proj = FindFileName( in_proj, "12" );
+
+	if( yld_proj == "empty" || cor_proj == "empty" ||
+	    map_proj == "empty" || bst_proj == "empty" ) exit(1);
+	
+	else {
 		
+		CopyFileForScan( yld_proj );
+		CopyFileForScan( cor_proj );
+		CopyFileForScan( map_proj );
+		CopyFileForScan( bst_proj );
+		bstlit = bst_proj + ".lit";
+		CopyFileForScan( bstlit );
+
+	}
+
+
+	// Find corresponsing target file for Gosia2
+	if( g2 ){
+		
+		in_targ = FindFileName( in_proj, "26" );
+	
+		if( in_targ == "empty" ) {
+			
+			cout << "Check your input files if you want to use Gosia2\n";
+			exit(1);
+			
+		}
+		
+		else {
+			
+			out_targ = FindFileName( in_targ, "22" );
+			yld_targ = FindFileName( in_targ, "3" );
+			cor_targ = FindFileName( in_targ, "4" );
+			map_targ = FindFileName( in_targ, "27" );
+			bst_targ = FindFileName( in_targ, "32" );
+			
+			if( out_targ == "empty" || bst_targ == "empty" ||
+			    yld_targ == "empty" || cor_targ == "empty" ||
+				map_targ == "empty" ) exit(1);
+			
+			else {
+				
+				CopyFileForScan( yld_targ );
+				CopyFileForScan( cor_targ );
+				CopyFileForScan( map_targ );
+				CopyFileForScan( bst_targ );
+				bstlit = bst_targ + ".lit";
+				CopyFileForScan( bstlit );
+
+			}
+
+		}
+		
+		CopyFileForScan( in_targ );
+
 	}
 
 	// Find corresponsing output files and matrix element files
 	out_proj = FindFileName( in_proj, "22" );
-	if( g2 ) out_targ = FindFileName( in_targ, "22" );
 	bst_proj = FindFileName( in_proj, "12" );
-	if( g2 ) bst_targ = FindFileName( in_targ, "32" );
 	
 	if( out_proj == "empty" || out_targ == "empty" ||
 	   bst_proj == "empty" || bst_targ == "empty" ) exit(1);
 
+	return;
+	
+}
+
+void scan::CopyFileForScan( string filename ){
+	
+	string newfilename = scanname + "/" + filename;
+	
+	ifstream source( filename );
+	ofstream dest( newfilename );
+	
+	dest << source.rdbuf();
+	dest.close();
+	
+	for( int i = 0; i < scandir.size(); ++i ){
+		
+		source.clear();
+		source.seekg(0);
+	
+		newfilename = scandir[i] + "/" + filename;
+		dest.open( newfilename );
+		dest << source.rdbuf();
+		dest.close();
+	
+	}
+
+	source.close();
+	
 	return;
 	
 }
@@ -115,15 +255,27 @@ void scan::OpenOutputFiles(){
 	//  if continuing, read output file first
 	//  if not, copy old files to ...old
 	outname = in_proj.substr( 0, in_proj.find_last_of(".") );
-	scandir = "./.scan_" + outname + getDateTime();
 	textname.push_back( outname + ".chisq" );
-	textname.push_back( outname + ".chisq_" + getDateTime() );
-	rsltname = outname + ".rslt";
-	rootname = outname + ".root";
+	textname.push_back( scanname + "/" + outname + ".chisq" );
+	rsltname = scanname + "/" + outname + ".rslt";
+	rootname = scanname + "/" + outname + ".root";
 	string cmd;
 	
-	if ( read ) old.open( textname[0].c_str(), ios::in );
-	else {
+	if( readflag ){
+		
+		old.open( textname[0].c_str(), ios::in );
+		
+		if( !old.is_open() ) {
+			
+			cout << "Couldn't open " << textname[0] << endl;
+			cout << "Cannot read previous results, starting fresh " << endl;
+			readflag = false;
+			
+		}
+	
+	}
+	
+	if( !readflag ) {
 		
 		outa.open( textname[0].c_str(), ios::out );
 		outb.open( textname[1].c_str(), ios::out );
@@ -131,13 +283,6 @@ void scan::OpenOutputFiles(){
 		out.push_back( &outb );
 		
 	}
-	
-	cmd = "cp " + textname[0] + " " + textname[0] + ".old";
-	if( system(NULL) ) system( cmd.c_str() );
-	cmd = "cp " + rootname + " " + rootname + ".old";
-	if( system(NULL) ) system( cmd.c_str() );
-	cmd = "cp " + rsltname + " " + rsltname + ".old";
-	if( system(NULL) ) system( cmd.c_str() );
 
 	rslt.open( rsltname.c_str(), ios::out );
 	ro.OpenRootFile( rootname );
@@ -160,12 +305,12 @@ void scan::CloseOutputs() {
 	
 }
 
-int scan::LookUpOldChisq() {
+int scan::LookUpOldChisq( float dme, float tme ) {
 
 	// Cycle through array and return index that matches matrix elements
 	int index = -1;
 	
-	for ( int i = 0; i < result_vector.size()/5; i++ ) {
+	for ( unsigned int i = 0; i < result_vector.size()/5; i++ ) {
 	
 		if ( TMath::Abs( dme - result_vector[5*i+0] ) < 1E-6 ) {
 			if ( TMath::Abs( tme - result_vector[5*i+1] ) < 1E-6 ) {
@@ -183,6 +328,9 @@ int scan::LookUpOldChisq() {
 }
 
 void scan::ContinueScan() {
+	
+	float dme_prv, tme_prv;
+	float chisq, chisq_proj, chisq_targ;
 	
 	if ( old.is_open() ) {
 		
@@ -216,7 +364,7 @@ void scan::ContinueScan() {
 	else {
 		
 		cout << "Cannot open " << textname[0].c_str() << " in order to resume\n";
-		read = false;
+		readflag = false;
 		
 	}
 	
@@ -327,11 +475,15 @@ double scan::ReadChiSqFromFile( string gosiaoutfile ) {
 
 }
 
-int scan::GetChiSq() {
+int scan::GetChiSq( string dirname, float &chisq_proj ) {
 	
-	string cmd = "gosia < " + in_proj;
-	cmd.append(" > /dev/null 2>&1");
+	string cmd = "cd " + dirname + " && ";
+	cmd.append( "gosia < " );
+	cmd.append( in_proj );
+	cmd.append( " > /dev/null 2>&1" );
 	
+	string outfile = dirname + "/" + out_proj;
+
 	int status = 0;
 	
 	// Run gosia Nmini times with system command
@@ -362,17 +514,22 @@ int scan::GetChiSq() {
 		
 	}
 	
-	else chisq_proj = ReadChiSqFromFile( out_proj );
+	else chisq_proj = ReadChiSqFromFile( outfile );
 	
 	return 1;
 	
 }
 
-int scan::GetChiSq2() {
+int scan::GetChiSq2( string dirname, float &chisq_proj, float &chisq_targ ) {
 	
-	string cmd = "gosia2 < " + in_proj;
-	cmd.append(" > /dev/null 2>&1");
+	string cmd = "cd " + dirname + " && ";
+	cmd.append( "gosia2 < " );
+	cmd.append( in_proj );
+	cmd.append( " > /dev/null 2>&1" );
 	
+	string outfile_p = dirname + "/" + out_proj;
+	string outfile_t = dirname + "/" + out_targ;
+
 	int status = 0;
 	
 	// Run gosia Nmini times with system command
@@ -405,8 +562,8 @@ int scan::GetChiSq2() {
 	
 	else {
 		
-		chisq_proj = ReadChiSqFromFile( out_proj );
-		chisq_targ = ReadChiSqFromFile( out_targ );
+		chisq_proj = ReadChiSqFromFile( outfile_p );
+		chisq_targ = ReadChiSqFromFile( outfile_t );
 		
 	}
 	
@@ -414,12 +571,14 @@ int scan::GetChiSq2() {
 	
 }
 
-int scan::IntegrateProjectile() {
+int scan::IntegrateProjectile( string dirname ) {
 
-	string line, cmd;
+	string line;
+	string cmd = "cd " + dirname + " && ";
 	
 	ifstream inti;
-	inti.open( intifile.c_str(), ios::in );
+	string infile = dirname + "/" + intifile;
+	inti.open( infile.c_str(), ios::in );
 	if( !inti.is_open() ) return 0;
 	else {
 		
@@ -427,8 +586,8 @@ int scan::IntegrateProjectile() {
 		getline( inti, line );
 
 		// If it looks like a gosia2 input, use that, else just normal gosia
-		if( line == "1" || line == "2" ) cmd = "gosia2 < ";
-		else cmd = "gosia < ";
+		if( line == "1" || line == "2" ) cmd.append( "gosia2 < " );
+		else cmd.append( "gosia < " );
 		
 		inti.close();
 		
@@ -450,7 +609,7 @@ int scan::IntegrateProjectile() {
 	// Error handling
 	if( status == 512 ) {
 		
-		cout << "Check that Gosia2 runs correctly\n";
+		cout << "Integration step failed, please check manually\n";
 		exit(1);
 		
 	}
@@ -466,19 +625,21 @@ int scan::IntegrateProjectile() {
 	
 }
 
-int scan::WriteProjectileMatrixElementsToFile() {
+int scan::WriteProjectileMatrixElementsToFile( string dirname, float dme, float tme ) {
 	
+	string bstname;
 	string litname;
 	ofstream mefile;
 	ifstream litfile;
-	string cmd;
-	double tmp;
+	
+	float tmp;
 	int index = 1;
-	
+
 	// Projectile matrix elements
-	litname = bst_proj + ".lit";
+	bstname = dirname + "/" + bst_proj;
+	litname = bstname + ".lit";
 	
-	mefile.open( bst_proj.c_str(), ios::out );
+	mefile.open( bstname.c_str(), ios::out );
 	if( !mefile.is_open() ) return 1;
 	
 	litfile.open( litname.c_str(), ios::in );
@@ -520,44 +681,27 @@ int scan::WriteProjectileMatrixElementsToFile() {
 	
 }
 
-int scan::WriteTargetMatrixElementsToFile() {
+int scan::WriteTargetMatrixElementsToFile( string dirname, float dme, float tme ) {
 	
+	string bstname;
 	string litname;
 	ofstream mefile;
 	ifstream litfile;
 	string cmd;
 
 	// Target matrix elements, copy from backup file
-	litname = bst_targ + ".lit";
+	bstname = dirname + "/" + bst_targ;
+	litname = bstname + ".lit";
 	
 	litfile.open( litname.c_str(), ios::in );
 	if( !litfile.is_open() ) return 2;
 	else litfile.close();
 	
-	cmd = "cp " + litname + " " + bst_targ;
+	cmd = "cp " + litname + " " + bstname;
 	if( system(NULL) ) system( cmd.c_str() );
 	else return 2;
 	
 	return 0;
-	
-}
-
-void scan::PrintStep() {
-	
-	// Print to terminal
-	cout << dme << "\t" << tme << "\t";
-	if( g2 ) cout << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
-	else cout << chisq << endl;
-
-	// Print to file
-	for ( int k = 0; k < 2; k++ ) {
-		
-		(*out[k]) << dme << "\t" << tme << "\t";
-		(*out[k]) << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
-		
-	}
-
-	return;
 	
 }
 
@@ -584,7 +728,8 @@ void scan::PrintResults() {
 	rslt << "          target: " << Ndata_targ << endl;
 	
 	// Check integration step was performed
-	if( intiflag == 1 ) cout << "Integration performed at each step\n";
+	if( intiflag == 1 && !no_calc ) cout << "Integration performed at each step\n";
+	else if( no_calc ) cout << "No calculations needed, results taken from chisq file\n\n";
 	else cout << "Integration performed with starting parameters only\n\n";
 
 	
@@ -592,12 +737,37 @@ void scan::PrintResults() {
 	
 }
 
-void scan::do_step() {
+void scan::PrintStep( float dme, float tme,
+					  float chisq_proj, float chisq_targ ) {
+	
+	float chisq = chisq_proj;
+	if( g2 ) chisq += chisq_targ;
+
+	// Print to terminal
+	cout << dme << "\t" << tme << "\t";
+	if( g2 ) cout << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
+	else cout << chisq << endl;
+
+	// Print to file
+	for ( int k = 0; k < 2; k++ ) {
+		
+		(*out[k]) << dme << "\t" << tme << "\t";
+		(*out[k]) << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
+		
+	}
+	
+	return;
+	
+}
+
+void scan::do_step( string dirname, int i, int j, float dme, float tme ) {
+	
+	float chisq_proj, chisq_targ;
 	
 	// Write matrix elements
-	metest = WriteProjectileMatrixElementsToFile();
+	metest = WriteProjectileMatrixElementsToFile( dirname, dme, tme );
 	if( g2 )
-		metest = WriteTargetMatrixElementsToFile();
+		metest = WriteTargetMatrixElementsToFile( dirname, dme, tme );
 	
 	if( metest == 1 )
 		cout << "Couldn't write projectile matrix elements to file\n";
@@ -608,14 +778,14 @@ void scan::do_step() {
 	if( metest > 0 ) exit(1);
 	
 	// Integration step
-	intiflag = IntegrateProjectile();
+	intiflag = IntegrateProjectile( dirname );
 	
 	// Run Gosia2 or standard Gosia and return chisq values
 	if( g2 )
-		minitest = GetChiSq2();
+		minitest = GetChiSq2( dirname, chisq_proj, chisq_targ );
 	
 	else
-		minitest = GetChiSq();
+		minitest = GetChiSq( dirname, chisq_proj );
 	
 	if ( minitest == 0 ) {
 		
@@ -624,20 +794,28 @@ void scan::do_step() {
 		
 	}
 	
+	no_calc = false;
+	
 	chisq_proj *= Ndata_proj;
 	chisq_targ *= Ndata_targ;
-	
-	if( g2 ) chisq = chisq_proj + chisq_targ;
-	else chisq = chisq_proj;
 
+	PrintStep( dme, tme, chisq_proj, chisq_targ );
+	ro.AddChisqPoint( i, j, dme, tme, chisq_proj, chisq_targ );
+	
 	return;
 	
 }
 
 void scan::run_scan() {
 	
+	float dme, tme;
+	float chisq, chisq_proj, chisq_targ;
+	
 	// If continuing or reading old values, get last calculated values
-	if ( read ) ContinueScan();
+	if ( readflag ) ContinueScan();
+	
+	// Check if any calculations were performed
+	no_calc = true;
 
 	// Get chisq values and write to file
 	cout << "Ndata projectile: " << Ndata_proj << endl;
@@ -654,9 +832,9 @@ void scan::run_scan() {
 		
 			tme = low_tme + j*stepSize_tme;
 			
-			if ( read ) {
+			if ( readflag ) {
 			
-				index = LookUpOldChisq();
+				index = LookUpOldChisq( dme, tme );
 				if ( index < 0 ) do_calc = true;
 				else {
 					
@@ -671,13 +849,21 @@ void scan::run_scan() {
 			
 			else do_calc = true;
 			
-			if ( do_calc ) do_step();
-
-			// Print to terminal
-			PrintStep();
+			if ( do_calc ) {
+								
+				do_step( scandir[0], i, j, dme, tme );
+				
+			}
 			
-			// Write in root graphs and histograms
-			ro.AddChisqPoint( i, j, dme, tme, chisq_proj, chisq_targ );
+			else {
+				
+				// Write to terminal and file
+				PrintStep( dme, tme, chisq_proj, chisq_targ );
+
+				// Write in root graphs and histograms
+				ro.AddChisqPoint( i, j, dme, tme, chisq_proj, chisq_targ );
+
+			}
 			
 		}
 
@@ -688,6 +874,7 @@ void scan::run_scan() {
 	
 	PrintResults();
 	CloseOutputs();
+	CleanDirectories();
 	
 	return;
 	

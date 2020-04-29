@@ -17,6 +17,9 @@ ROOT (root.cern.ch) must be installed and directories set correctly (i.e. using 
 Further to this, gosia and gosia2 must be installed (with names "gosia" and "gosia2", respectively) and your PATH variable should point their directory(s).
 Please check the Makefile and define the BINDIR for your needs.
 
+In version 2, currently in development, your compiler will have to have the C++17 standard and above.
+This is to use the filesystem libraries available from this version onwards. However, as a compromise, I am currently using the old C versions, which will only work on Linux, so forget Windows portability!
+
 
 USAGE
 -----

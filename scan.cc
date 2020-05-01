@@ -95,7 +95,7 @@ void scan::CleanDirectories() {
 	
 	//cout << "Scan directories have not been deleted" << endl;
 
-	//for( int i = 0; i < scandir.size(); ++i ){
+	//for( unsigned int i = 0; i < scandir.size(); ++i ){
 	//
 	//	cout << "rm -rf " << scandir[i] << endl;
 	//
@@ -208,7 +208,7 @@ void scan::CopyFileForScan( string filename ){
 	dest << source.rdbuf();
 	dest.close();
 	
-	for( int i = 0; i < scandir.size(); ++i ){
+	for( unsigned int i = 0; i < scandir.size(); ++i ){
 		
 		source.clear();
 		source.seekg(0);
@@ -879,7 +879,7 @@ void scan::run_scan() {
 		}
 				
 		// Join the threads
-		for( int m = 0; m < op.size(); ++m ) {
+		for( unsigned int m = 0; m < op.size(); ++m ) {
 			
 			if( op[m].joinable() ) op[m].join();
 			//else op.erase( op.begin()+m );

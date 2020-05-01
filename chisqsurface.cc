@@ -130,96 +130,96 @@ int main( int argc, char* argv[] ) {
 		cout << "Ndata projectile: " << Ndata_proj << endl;
 		if( g2 ) cout << "          target: " << Ndata_targ << endl;
 		
-		// Matrix element indicies - "DME" or x-axis
+		// Matrix element indicies - "xme" or x-axis
 		if( result.count("x") ) {
 			
-			dme_index = result["x"].as<int>();
-			cout << "Matrix element on x-axis has index = " << dme_index << endl;
+			xme_index = result["x"].as<int>();
+			cout << "Matrix element on x-axis has index = " << xme_index << endl;
 			
 		}
 		
 		else {
 			
-			cout << "Matrix element on x-axis has the default index = " << dme_index << endl;
+			cout << "Matrix element on x-axis has the default index = " << xme_index << endl;
 			
 		}
 		
-		// Matrix element indicies - "TME" or y-axis
+		// Matrix element indicies - "yme" or y-axis
 		if( result.count("y") ) {
 			
-			tme_index = result["y"].as<int>();
-			cout << "Matrix element on y-axis has index = " << tme_index << endl;
+			yme_index = result["y"].as<int>();
+			cout << "Matrix element on y-axis has index = " << yme_index << endl;
 			
 		}
 		
 		else {
 			
-			cout << "Matrix element on y-axis has the default index = " << tme_index << endl;
+			cout << "Matrix element on y-axis has the default index = " << yme_index << endl;
 			
 		}
 		
 		// Trap problem if scanning the same matrix element against itself!
-		if( dme_index == tme_index ) {
+		if( xme_index == yme_index ) {
 			
-			cout << "Cannot scan matrix elements with index = " << dme_index << " and " << tme_index << endl;
+			cout << "Cannot scan matrix elements with index = " << xme_index << " and " << yme_index << endl;
 			exit(1);
 			
 		}
 		
-		// Matrix element limits - "DME" or x-axis
+		// Matrix element limits - "xme" or x-axis
 		if( result.count("x-low") ) {
 			
-			low_dme = result["x-low"].as<float>();
+			low_xme = result["x-low"].as<float>();
 			
 		}
 		
 		if( result.count("x-upp") ) {
 			
-			upp_dme = result["x-upp"].as<float>();
+			upp_xme = result["x-upp"].as<float>();
 			
 		}
 		
-		// Matrix element limits - "TME" or y-axis
+		// Matrix element limits - "yme" or y-axis
 		if( result.count("y-low") ) {
 
-			low_tme = result["y-low"].as<float>();
+			low_yme = result["y-low"].as<float>();
 			
 		}
 		
 		if( result.count("y-upp") ) {
 			
-			upp_tme = result["y-upp"].as<float>();
+			upp_yme = result["y-upp"].as<float>();
 			
 		}
 		
 		// Ranges summary
-		cout << "Scanning x-axis from " << low_dme << " to " << upp_dme << endl;
-		cout << "Scanning y-axis from " << low_tme << " to " << upp_tme << endl;
+		cout << "Scanning x-axis from " << low_xme << " to " << upp_xme << endl;
+		cout << "Scanning y-axis from " << low_yme << " to " << upp_yme << endl;
 		
 		// Number of scan steps
 		if( result.count("nx") ) {
 			
-			Nsteps_dme = result["nx"].as<int>();
-			cout << "Using " <<  Nsteps_dme << " steps in x-axis\n";
+			Nsteps_xme = result["nx"].as<int>();
+			cout << "Using " <<  Nsteps_xme << " steps in x-axis\n";
 			
 		}
 		
 		else {
 			
-			cout << "Using default number of steps in x-axis = " << Nsteps_dme << endl;
+			cout << "Using default number of steps in x-axis = " << Nsteps_xme << endl;
 			
 		}
 		
 		if( result.count("ny") ) {
 			
-			Nsteps_tme = result["ny"].as<int>();
-			cout << "Using " <<  Nsteps_tme << " steps in y-axis\n";
+			Nsteps_yme = result["ny"].as<int>();
+			cout << "Using " <<  Nsteps_yme << " steps in y-axis\n";
 			
 		}
 		
 		else {
 			
-			cout << "Using default number of steps in y-axis = " << Nsteps_tme << endl;
+			cout << "Using default number of steps in y-axis = " << Nsteps_yme << endl;
 			
 		}
 		
@@ -269,15 +269,15 @@ int main( int argc, char* argv[] ) {
 	// We need the ROOT objects to store the results of the scan
 	//cout << "ROOTing...\n";
 	rootobjs ro;
-	ro.SetupRoot( low_dme, upp_dme, Nsteps_dme,
-				  low_tme, upp_tme, Nsteps_tme );
+	ro.SetupRoot( low_xme, upp_xme, Nsteps_xme,
+				  low_yme, upp_yme, Nsteps_yme );
 
 	// Put all of this into the scan
 	//cout << "Scanning...\n";
 	scan s;
-	s.SetupScan( in_proj, intifile, tme_index, dme_index,
-		    low_tme, upp_tme, Nsteps_tme,
-		    low_dme, upp_dme, Nsteps_dme,
+	s.SetupScan( in_proj, intifile, yme_index, xme_index,
+		    low_xme, upp_xme, Nsteps_xme,
+		    low_yme, upp_yme, Nsteps_yme,
 			Ndata_proj, Ndata_targ,
 			Nmini, Npara,
 		    g2, readflag, ro );

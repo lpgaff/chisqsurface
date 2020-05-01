@@ -19,9 +19,9 @@ scan::~scan(){
 }
 
 void scan::SetupScan( string _in_proj, string _intifile,
-					  float _dme_index, float _tme_index,
-					  float _low_dme, float _upp_dme, int _Nsteps_dme,
-					  float _low_tme, float _upp_tme, int _Nsteps_tme,
+					  float _xme_index, float _yme_index,
+					  float _low_xme, float _upp_xme, int _Nsteps_xme,
+					  float _low_yme, float _upp_yme, int _Nsteps_yme,
 					  int _Ndata_proj, int _Ndata_targ,
 					  int _Nmini, int _Npara,
 					  bool _g2, bool _readflag, rootobjs _ro ) {
@@ -29,21 +29,21 @@ void scan::SetupScan( string _in_proj, string _intifile,
 	// Assign variables for the scan
 	in_proj = _in_proj;
 	intifile = _intifile;
-	tme_index = _tme_index;
-	dme_index = _dme_index;
-	low_tme = _low_tme;
-	upp_tme = _upp_tme;
-	low_dme = _low_dme;
-	upp_dme = _upp_dme;
-	Nsteps_tme = _Nsteps_tme;
-	Nsteps_dme = _Nsteps_dme;
+	yme_index = _yme_index;
+	xme_index = _xme_index;
+	low_yme = _low_yme;
+	upp_yme = _upp_yme;
+	low_xme = _low_xme;
+	upp_xme = _upp_xme;
+	Nsteps_xme = _Nsteps_xme;
+	Nsteps_yme = _Nsteps_yme;
 	Ndata_proj = _Ndata_proj;
 	Ndata_targ = _Ndata_targ;
 
-	stepSize_dme = ( upp_dme - low_dme ) / (float)(Nsteps_dme-1);
-	stepSize_tme = ( upp_tme - low_tme ) / (float)(Nsteps_tme-1);
-	if( Nsteps_dme == 1 ) stepSize_dme = 0;
-	if( Nsteps_tme == 1 ) stepSize_tme = 0;
+	stepSize_xme = ( upp_xme - low_xme ) / (float)(Nsteps_xme-1);
+	stepSize_yme = ( upp_yme - low_yme ) / (float)(Nsteps_yme-1);
+	if( Nsteps_xme == 1 ) stepSize_xme = 0;
+	if( Nsteps_yme == 1 ) stepSize_yme = 0;
 
 	Nmini = _Nmini;
 	Npara = _Npara;
@@ -341,45 +341,49 @@ void scan::CloseOutputs() {
 	
 }
 
-int scan::LookUpOldChisq( float dme, float tme ) {
+void scan::LookUpOldChisq( float xme, float yme, float &chisq_proj, float &chisq_targ, bool &do_calc ) {
 
-	// Cycle through array and return index that matches matrix elements
-	int index = -1;
+	// Cycle through array and return chisq values on a match
+	do_calc = true;
 	
 	for ( unsigned int i = 0; i < result_vector.size()/5; i++ ) {
 	
-		if ( TMath::Abs( dme - result_vector[5*i+0] ) < 1E-6 ) {
-			if ( TMath::Abs( tme - result_vector[5*i+1] ) < 1E-6 ) {
+		cout << xme << "\t" << result_vector[5*i+0] << endl;
+		
+		if ( TMath::Abs( xme - result_vector[5*i+0] ) < 1E-6 ) {
+			
+			if ( TMath::Abs( yme - result_vector[5*i+1] ) < 1E-6 ) {
 
-				index = i; // found it!
-				break; // stop looking once we've found it!
-
+				chisq_proj = result_vector[5*i+2];
+				chisq_targ = result_vector[5*i+3];
+				do_calc = false;
+				
 			}
 		}
 			
 	}
 
-	return index;
+	return;
 
 }
 
 void scan::ContinueScan() {
 	
-	float dme_prv, tme_prv;
+	float xme_prv, yme_prv;
 	float chisq, chisq_proj, chisq_targ;
 	
 	if ( old.is_open() ) {
 		
-		old >> dme_prv >> tme_prv >> chisq_proj >> chisq_targ >> chisq;
+		old >> xme_prv >> yme_prv >> chisq_proj >> chisq_targ >> chisq;
 		while ( !old.eof() ) {
 			
-			result_vector.push_back( (float)dme_prv );
-			result_vector.push_back( (float)tme_prv );
+			result_vector.push_back( (float)xme_prv );
+			result_vector.push_back( (float)yme_prv );
 			result_vector.push_back( (float)chisq_proj );
 			result_vector.push_back( (float)chisq_targ );
 			result_vector.push_back( (float)chisq );
 			
-			old >> dme_prv >> tme_prv >> chisq_proj >> chisq_targ >> chisq;
+			old >> xme_prv >> yme_prv >> chisq_proj >> chisq_targ >> chisq;
 			
 		}
 		
@@ -582,7 +586,7 @@ void scan::IntegrateProjectile( string dirname ) {
 	
 }
 
-void scan::WriteProjectileMatrixElementsToFile( string dirname, float dme, float tme ) {
+void scan::WriteProjectileMatrixElementsToFile( string dirname, float xme, float yme ) {
 	
 	string bstname;
 	string litname;
@@ -616,17 +620,17 @@ void scan::WriteProjectileMatrixElementsToFile( string dirname, float dme, float
 	
 	while ( !litfile.eof() ) {
 		
-		if ( index == tme_index ) {
+		if ( index == yme_index ) {
 			
-			mefile << tme << endl; // write current dme
-			litfile >> tmp; // dump initial tme value and read next one
+			mefile << yme << endl; // write current yme
+			litfile >> tmp; // dump initial yme value and read next one
 			
 		}
 		
-		else if ( index == dme_index ) {
+		else if ( index == xme_index ) {
 			
-			mefile << dme << endl; // write current dme
-			litfile >> tmp; // dump initial dme value and read next one
+			mefile << xme << endl; // write current xme
+			litfile >> tmp; // dump initial xme value and read next one
 			
 		}
 		
@@ -648,7 +652,7 @@ void scan::WriteProjectileMatrixElementsToFile( string dirname, float dme, float
 	
 }
 
-void scan::WriteTargetMatrixElementsToFile( string dirname, float dme, float tme ) {
+void scan::WriteTargetMatrixElementsToFile( string dirname, float xme, float yme ) {
 	
 	string bstname;
 	string litname;
@@ -708,21 +712,21 @@ void scan::PrintResults() {
 	
 }
 
-void scan::PrintStep( float dme, float tme,
+void scan::PrintStep( float xme, float yme,
 					  float chisq_proj, float chisq_targ ) {
 	
 	float chisq = chisq_proj;
 	if( g2 ) chisq += chisq_targ;
 
 	// Print to terminal
-	cout << dme << "\t" << tme << "\t";
+	cout << xme << "\t" << yme << "\t";
 	if( g2 ) cout << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
 	else cout << chisq << endl;
 
 	// Print to file
 	for ( int k = 0; k < 2; k++ ) {
 		
-		(*out[k]) << dme << "\t" << tme << "\t";
+		(*out[k]) << xme << "\t" << yme << "\t";
 		(*out[k]) << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
 		
 	}
@@ -742,14 +746,14 @@ void scan::PrintHeader() {
 	
 }
 
-void scan::do_step( string dirname, int i, int j, float dme, float tme ) {
+void scan::do_step( string dirname, int i, int j, float xme, float yme ) {
 	
 	// Variables
 	float chisq_proj, chisq_targ = 0.0;
 
 	// Write matrix elements
-	WriteProjectileMatrixElementsToFile( dirname, dme, tme );
-	if( g2 ) WriteTargetMatrixElementsToFile( dirname, dme, tme );
+	WriteProjectileMatrixElementsToFile( dirname, xme, yme );
+	if( g2 ) WriteTargetMatrixElementsToFile( dirname, xme, yme );
 
 	// Integration step
 	if( intiflag ) IntegrateProjectile( dirname );
@@ -764,8 +768,8 @@ void scan::do_step( string dirname, int i, int j, float dme, float tme ) {
 		// Lock the printing and ROOT access
 		std::unique_lock<std::mutex> lock(mlock);
 		
-		PrintStep( dme, tme, chisq_proj, chisq_targ );
-		ro.AddChisqPoint( i, j, dme, tme, chisq_proj, chisq_targ );
+		PrintStep( xme, yme, chisq_proj, chisq_targ );
+		ro.AddChisqPoint( i, j, xme, yme, chisq_proj, chisq_targ );
 		
 		// Update the flags
 		no_calc = false;
@@ -778,8 +782,9 @@ void scan::do_step( string dirname, int i, int j, float dme, float tme ) {
 
 void scan::run_scan() {
 	
-	float dme, tme;
-	float chisq, chisq_proj, chisq_targ;
+	float xme, yme;
+	float chisq_proj, chisq_targ;
+	bool do_calc = true;
 	
 	// If continuing or reading old values, get last calculated values
 	if ( readflag ) {
@@ -791,28 +796,16 @@ void scan::run_scan() {
 	no_calc = true;
 
 	// Loop over matrix elements and check if we need to calculate chisq
-	for ( int i=0; i<Nsteps_dme; ++i ) {
+	for ( int i=0; i<Nsteps_xme; ++i ) {
 	
-		dme = low_dme + i*stepSize_dme;
+		xme = low_xme + i*stepSize_xme;
 
-		for ( int j=0; j<Nsteps_tme; ++j ) {
+		for ( int j=0; j<Nsteps_yme; ++j ) {
 		
-			tme = low_tme + j*stepSize_tme;
+			yme = low_yme + j*stepSize_yme;
 			
-			if ( readflag ) {
-			
-				index = LookUpOldChisq( dme, tme );
-				if ( index < 0 ) do_calc = true;
-				else {
-					
-					chisq_proj = result_vector.at( 5*index+2 );
-					chisq_targ = result_vector.at( 5*index+3 );
-					chisq = result_vector.at( 5*index+4 );
-					do_calc = false;
-					
-				}
-			
-			}
+			if ( readflag )	LookUpOldChisq( xme, yme, std::ref(chisq_proj),
+							    std::ref(chisq_targ), std::ref(do_calc) );
 			
 			else do_calc = true;
 			
@@ -820,18 +813,18 @@ void scan::run_scan() {
 								
 				i_todo.push_back( i );
 				j_todo.push_back( j );
-				dme_todo.push_back( dme );
-				tme_todo.push_back( tme );
+				xme_todo.push_back( xme );
+				yme_todo.push_back( yme );
 				
 			}
 			
 			else {
 				
 				// Write to terminal and file
-				PrintStep( dme, tme, chisq_proj, chisq_targ );
+				PrintStep( xme, yme, chisq_proj, chisq_targ );
 
 				// Write in root graphs and histograms
-				ro.AddChisqPoint( i, j, dme, tme, chisq_proj, chisq_targ );
+				ro.AddChisqPoint( i, j, xme, yme, chisq_proj, chisq_targ );
 
 			}
 
@@ -862,7 +855,7 @@ void scan::run_scan() {
 			std::thread calc( &scan::do_step,
 							 this, scandir[l],
 							 i_todo[jobN], j_todo[jobN],
-							 dme_todo[jobN], tme_todo[jobN] );
+							 xme_todo[jobN], yme_todo[jobN] );
 			
 			// Move to CPU of choice
 			cpu_set_t cpuset;
@@ -891,7 +884,7 @@ void scan::run_scan() {
 	// Just linear for whatever is left over
 	for( int k = todo-left; k < todo; ++k ) {
 		
-		do_step( scandir[0], i_todo[k], j_todo[k], dme_todo[k], tme_todo[k] );
+		do_step( scandir[0], i_todo[k], j_todo[k], xme_todo[k], yme_todo[k] );
 		
 	}
 

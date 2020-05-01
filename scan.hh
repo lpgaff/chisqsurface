@@ -99,21 +99,21 @@ public:
 	~scan();
 	
 	// Lookup functions
-	int			LookUpOldChisq( float dme, float tme );
-	void		ContinueScan();
 	std::string	FindFileName( string in_file, string tape );
+	void		LookUpOldChisq( float xme, float yme, float &chisq_proj, float &chisq_targ, bool &do_calc );
+	void		ContinueScan();
 	void		ReadChiSqFromFile( string gosiaoutfile, float &chisq );
 	void		GetChiSq( string dirname, float &chisq_proj, float &chisq_targ );
 
 	// Execution functions
 	void		IntegrateProjectile( string dirname );
-	void		WriteProjectileMatrixElementsToFile( string dirname, float dme, float tme );
-	void		WriteTargetMatrixElementsToFile( string dirname, float dme, float tme );
+	void		WriteProjectileMatrixElementsToFile( string dirname, float xme, float yme );
+	void		WriteTargetMatrixElementsToFile( string dirname, float xme, float yme );
 	void		RunCmd( std::string cmd );
 	
 	// Main functions
 	void		run_scan();
-	void		do_step( string dirname, int i, int j, float dme, float tme );
+	void		do_step( string dirname, int i, int j, float xme, float yme );
 	
 	// Getting the files
 	void		MakeScanDirectories();
@@ -125,15 +125,15 @@ public:
 
 	// Some nice functions
 	std::string	getDateTime();
-	void		PrintStep( float dme, float tme, float chisq_proj, float chisq_targ);
+	void		PrintStep( float xme, float yme, float chisq_proj, float chisq_targ);
 	void		PrintResults();
 	void		PrintHeader();
 
 	// Main Setup Function
 	void	SetupScan( std::string _in_proj, std::string _intifile,
-					   float _dme_index, float _tme_index,
-					   float _low_dme, float _upp_dme, int _Nsteps_dme,
-					   float _low_tme, float _upp_tme, int _Nsteps_tme,
+					   float _xme_index, float _yme_index,
+					   float _low_xme, float _upp_xme, int _Nsteps_xme,
+					   float _low_yme, float _upp_yme, int _Nsteps_yme,
 					   int _Ndata_proj, int _Ndata_targ,
 					   int _Nmini, int _Npara,
 					   bool _g2, bool _readflag, rootobjs ro );
@@ -166,17 +166,17 @@ private:
 	
 	std::vector<int> i_todo;
 	std::vector<int> j_todo;
-	std::vector<float> dme_todo;
-	std::vector<float> tme_todo;
+	std::vector<float> xme_todo;
+	std::vector<float> yme_todo;
 
-	int tme_index;
-	int dme_index;
-	float low_tme;
-	float upp_tme;
-	int Nsteps_tme;
-	float low_dme;
-	float upp_dme ;
-	int Nsteps_dme;
+	int yme_index;
+	int xme_index;
+	float low_yme;
+	float upp_yme;
+	int Nsteps_yme;
+	float low_xme;
+	float upp_xme ;
+	int Nsteps_xme;
 	
 	int Ndata_proj;
 	int Ndata_targ;
@@ -198,13 +198,11 @@ private:
 	std::string rootname;
 	
 	bool intiflag;
-	bool do_calc;
 	bool no_calc;
-	float stepSize_dme;
-	float stepSize_tme;
+	float stepSize_xme;
+	float stepSize_yme;
 
 	std::vector<float> result_vector;
-	int index;
 
 };
 

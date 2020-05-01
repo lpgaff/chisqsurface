@@ -275,7 +275,7 @@ int main( int argc, char* argv[] ) {
 	// Put all of this into the scan
 	//cout << "Scanning...\n";
 	scan s;
-	s.SetupScan( in_proj, intifile, yme_index, xme_index,
+	s.SetupScan( in_proj, intifile, xme_index, yme_index,
 		    low_xme, upp_xme, Nsteps_xme,
 		    low_yme, upp_yme, Nsteps_yme,
 			Ndata_proj, Ndata_targ,

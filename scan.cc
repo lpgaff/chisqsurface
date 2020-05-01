@@ -53,6 +53,9 @@ void scan::SetupScan( string _in_proj, string _intifile,
 	ro = _ro;
 	
 	tstamp = getDateTime();
+	
+	if( intifile == "empty" ) intiflag = false;
+	else intiflag = true;
 
 	MakeScanDirectories();
 	GetAuxFiles();
@@ -108,7 +111,7 @@ void scan::GetAuxFiles(){
 	
 	// Copy INTI and MINI files
 	CopyFileForScan( in_proj );
-	if( intifile.size() > 1 ) CopyFileForScan( intifile );
+	if( intifile != "empty" ) CopyFileForScan( intifile );
 	
 	// Detector definition files
 	raw_proj = FindFileName( in_proj, "8" );
@@ -249,6 +252,39 @@ string scan::getDateTime() {
 	
 }
 
+void scan::RunCmd( std::string cmd ){
+	
+	int status = 0;
+	
+	if( system(NULL) ) status = system( cmd.data() );
+	else {
+		
+		cerr << "Cannot run system command:" << endl;
+		cerr << "\t" << cmd << endl;
+		exit( status );
+
+	}
+	
+	// Error handling
+	if( status == 512 ) {
+		
+		cerr << "Check that this command runs correctly:";
+		cerr << "\t" << cmd << endl;
+		exit( status );
+
+	}
+	
+	else if( status == 2 ) {
+		
+		cerr << "\nKilled!\n";
+		exit( status );
+		
+	}
+
+	return;
+	
+}
+
 void scan::OpenOutputFiles(){
 	
 	// Open output text and root files
@@ -263,7 +299,7 @@ void scan::OpenOutputFiles(){
 	
 	if( readflag ){
 		
-		old.open( textname[0].c_str(), ios::in );
+		old.open( textname[0].data(), ios::in );
 		
 		if( !old.is_open() ) {
 			
@@ -277,14 +313,14 @@ void scan::OpenOutputFiles(){
 	
 	if( !readflag ) {
 		
-		outa.open( textname[0].c_str(), ios::out );
-		outb.open( textname[1].c_str(), ios::out );
+		outa.open( textname[0].data(), ios::out );
+		outb.open( textname[1].data(), ios::out );
 		out.push_back( &outa );
 		out.push_back( &outb );
 		
 	}
 
-	rslt.open( rsltname.c_str(), ios::out );
+	rslt.open( rsltname.data(), ios::out );
 	ro.OpenRootFile( rootname );
 
 	return;
@@ -354,8 +390,8 @@ void scan::ContinueScan() {
 		
 		// Reopen file for writing
 		old.close();
-		outa.open( textname[0].c_str(), ios::out );
-		outb.open( textname[1].c_str(), ios::out );
+		outa.open( textname[0].data(), ios::out );
+		outb.open( textname[1].data(), ios::out );
 		out.push_back( &outa );
 		out.push_back( &outb );
 				
@@ -363,7 +399,7 @@ void scan::ContinueScan() {
 	
 	else {
 		
-		cout << "Cannot open " << textname[0].c_str() << " in order to resume\n";
+		cout << "Cannot open " << textname[0].data() << " in order to resume\n";
 		readflag = false;
 		
 	}
@@ -375,7 +411,7 @@ string scan::FindFileName( string in_file, string tape ) {
 	
 	// Open gosia input file for projectile and find the output file name
 	ifstream gin;
-	gin.open( in_file.c_str(), ios::in );
+	gin.open( in_file.data(), ios::in );
 	if( !gin.is_open() ) {
 		
 		cout << "Unable to open " << in_file << endl;
@@ -433,15 +469,15 @@ string scan::FindFileName( string in_file, string tape ) {
 	
 }
 
-double scan::ReadChiSqFromFile( string gosiaoutfile ) {
+void scan::ReadChiSqFromFile( string gosiaoutfile, float &chisq ) {
 
 	// Open gosia output file for projectile or target. Get from input
 	ifstream g2out;
-	g2out.open( gosiaoutfile.c_str(), ios::in );
+	g2out.open( gosiaoutfile.data(), ios::in );
 	if( !g2out.is_open() ) {
 	
 		cout << "Unable to open " << gosiaoutfile << endl;
-		return 999;
+		exit(1);
 
 	}
 	
@@ -450,7 +486,7 @@ double scan::ReadChiSqFromFile( string gosiaoutfile ) {
 	string line, tmp;
 	string qry = "     *** CHISQ=";
 	stringstream gosia_chisq (stringstream::in | stringstream::out);
-	float chisq_tmp = 999;
+	float chisq_tmp;
  
 	getline(g2out,line);
 	while ( !g2out.eof() ) {
@@ -469,117 +505,60 @@ double scan::ReadChiSqFromFile( string gosiaoutfile ) {
 	
 	g2out.close();
 	
-	if( !flag ) cout << "Couldn't find chisq value in " << gosiaoutfile << endl;
-	
-	return chisq_tmp;
-
-}
-
-int scan::GetChiSq( string dirname, float &chisq_proj ) {
-	
-	string cmd = "cd " + dirname + " && ";
-	cmd.append( "gosia < " );
-	cmd.append( in_proj );
-	cmd.append( " > /dev/null 2>&1" );
-	
-	string outfile = dirname + "/" + out_proj;
-
-	int status = 0;
-	
-	// Run gosia Nmini times with system command
-	for( int i = 0; i < Nmini; i++ ) {
+	if( !flag ) {
 		
-		if( system(NULL) ) status = system( cmd.c_str() );
-		else {
-			
-			cout << "Cannot run system command\n";
-			exit(1);
-			
-		}
-		
-	}
-	
-	// Error handling
-	if( status == 512 ) {
-		
-		cout << "Check that Gosia runs correctly\n";
+		cout << "Couldn't find chisq value in " << gosiaoutfile << endl;
 		exit(1);
 		
 	}
 	
-	else if( status == 2 ) {
-		
-		cout << "\nKilled!\n";
-		exit( status );
-		
-	}
+	else chisq = chisq_tmp;
 	
-	else chisq_proj = ReadChiSqFromFile( outfile );
-	
-	return 1;
-	
+	return;
+
 }
 
-int scan::GetChiSq2( string dirname, float &chisq_proj, float &chisq_targ ) {
+void scan::GetChiSq( string dirname, float &chisq_proj, float &chisq_targ ) {
 	
 	string cmd = "cd " + dirname + " && ";
-	cmd.append( "gosia2 < " );
+	if( g2 ) cmd.append( "gosia2 < " );
+	else cmd.append( "gosia < " );
 	cmd.append( in_proj );
 	cmd.append( " > /dev/null 2>&1" );
 	
 	string outfile_p = dirname + "/" + out_proj;
 	string outfile_t = dirname + "/" + out_targ;
-
-	int status = 0;
 	
 	// Run gosia Nmini times with system command
 	for( int i = 0; i < Nmini; i++ ) {
 		
-		if( system(NULL) ) status = system( cmd.c_str() );
-		else {
-			
-			cout << "Cannot run system command\n";
-			return 0;
-			
-		}
+		std::thread minithread( &scan::RunCmd, this, cmd );
+		minithread.join();
 		
 	}
 	
-	// Error handling
-	if( status == 512 ) {
-		
-		cout << "Check that Gosia2 runs correctly\n";
-		exit(1);
-		
-	}
+	ReadChiSqFromFile( outfile_p, std::ref(chisq_proj) );
+	if( g2 ) ReadChiSqFromFile( outfile_t, std::ref(chisq_targ) );
 	
-	else if( status == 2 ) {
-		
-		cout << "\nKilled!\n";
-		exit( status );
-		
-	}
-	
-	else {
-		
-		chisq_proj = ReadChiSqFromFile( outfile_p );
-		chisq_targ = ReadChiSqFromFile( outfile_t );
-		
-	}
-	
-	return 1;
+	return;
 	
 }
 
-int scan::IntegrateProjectile( string dirname ) {
+void scan::IntegrateProjectile( string dirname ) {
 
 	string line;
 	string cmd = "cd " + dirname + " && ";
 	
 	ifstream inti;
 	string infile = dirname + "/" + intifile;
-	inti.open( infile.c_str(), ios::in );
-	if( !inti.is_open() ) return 0;
+	inti.open( infile.data(), ios::in );
+	if( !inti.is_open() ) {
+		
+		cerr << "Cannot open " << infile << endl;
+		exit(2);
+		
+	}
+
 	else {
 		
 		// Check first line of integral file
@@ -593,39 +572,17 @@ int scan::IntegrateProjectile( string dirname ) {
 		
 	}
 	
-	int status = 0;
-	
 	cmd.append( intifile );
 	cmd.append( " > /dev/null 2>&1" );
 	
-	if( system(NULL) ) status = system( cmd.c_str() );
-	else {
-		
-		cout << "Cannot run system command\n";
-		return 0;
-		
-	}
-
-	// Error handling
-	if( status == 512 ) {
-		
-		cout << "Integration step failed, please check manually\n";
-		exit(1);
-		
-	}
+	std::thread intithread( &scan::RunCmd, this, cmd );
+	intithread.join();
 	
-	else if( status == 2 ) {
-		
-		cout << "\nKilled!\n";
-		exit( status );
-		
-	}
-	
-	return 1;
+	return;
 	
 }
 
-int scan::WriteProjectileMatrixElementsToFile( string dirname, float dme, float tme ) {
+void scan::WriteProjectileMatrixElementsToFile( string dirname, float dme, float tme ) {
 	
 	string bstname;
 	string litname;
@@ -639,12 +596,22 @@ int scan::WriteProjectileMatrixElementsToFile( string dirname, float dme, float 
 	bstname = dirname + "/" + bst_proj;
 	litname = bstname + ".lit";
 	
-	mefile.open( bstname.c_str(), ios::out );
-	if( !mefile.is_open() ) return 1;
+	mefile.open( bstname.data(), ios::out );
+	litfile.open( litname.data(), ios::in );
+	if( !mefile.is_open() ) {
+		
+		cerr << "Cannot open " << bstname << endl;
+		exit(2);
+
+	}
 	
-	litfile.open( litname.c_str(), ios::in );
-	if( !litfile.is_open() ) return 1;
-	
+	if( !litfile.is_open() ) {
+		   
+		cerr << "Cannot open " << litname << endl;
+		exit(2);
+
+	}
+
 	litfile >> tmp; // read first me value
 	
 	while ( !litfile.eof() ) {
@@ -677,31 +644,35 @@ int scan::WriteProjectileMatrixElementsToFile( string dirname, float dme, float 
 	mefile.close();
 	litfile.close();
 	
-	return 0;
+	return;
 	
 }
 
-int scan::WriteTargetMatrixElementsToFile( string dirname, float dme, float tme ) {
+void scan::WriteTargetMatrixElementsToFile( string dirname, float dme, float tme ) {
 	
 	string bstname;
 	string litname;
 	ofstream mefile;
 	ifstream litfile;
-	string cmd;
+
 
 	// Target matrix elements, copy from backup file
 	bstname = dirname + "/" + bst_targ;
 	litname = bstname + ".lit";
 	
-	litfile.open( litname.c_str(), ios::in );
-	if( !litfile.is_open() ) return 2;
+	litfile.open( litname.data(), ios::in );
+	if( !litfile.is_open() ) {
+		   
+		cerr << "Cannot open " << litname << endl;
+		exit(2);
+
+	}
+
 	else litfile.close();
 	
-	cmd = "cp " + litname + " " + bstname;
-	if( system(NULL) ) system( cmd.c_str() );
-	else return 2;
-	
-	return 0;
+	RunCmd( "cp " + litname + " " + bstname );
+
+	return;
 	
 }
 
@@ -711,7 +682,7 @@ void scan::PrintResults() {
 	cout << "\nChisq minimum found at " << ro.GetChisqMin() << endl;
 	cout << "X-axis ME = " << ro.GetXme() << "(-" << ro.GetXlow1sig();
 	cout << "; +" << ro.GetXupp1sig() << ")1sig." << " (-" << ro.GetXlow2sig();
-	cout << "; +" << ro.GetXupp2sig() << ")2sig." << endl << endl;
+	cout << "; +" << ro.GetXupp2sig() << ")2sig." << endl;
 	cout << "Y-axis ME = " << ro.GetYme() << "(-" << ro.GetYlow1sig();
 	cout << "; +" << ro.GetYupp1sig() << ")1sig." << " (-" << ro.GetYlow2sig();
 	cout << "; +" << ro.GetYupp2sig() << ")2sig." << endl << endl;
@@ -719,7 +690,7 @@ void scan::PrintResults() {
 	// Print to file
 	rslt << "X-axis ME = " << ro.GetXme() << "(-" << ro.GetXlow1sig();
 	rslt << "; +" << ro.GetXupp1sig() << ")1sig." << " (-" << ro.GetXlow2sig();
-	rslt << "; +" << ro.GetXupp2sig() << ")2sig." << endl << endl;
+	rslt << "; +" << ro.GetXupp2sig() << ")2sig." << endl;
 	rslt << "Y-axis ME = " << ro.GetYme() << "(-" << ro.GetYlow1sig();
 	rslt << "; +" << ro.GetYupp1sig() << ")1sig." << " (-" << ro.GetYlow2sig();
 	rslt << "; +" << ro.GetYupp2sig() << ")2sig." << endl << endl;
@@ -728,7 +699,7 @@ void scan::PrintResults() {
 	rslt << "          target: " << Ndata_targ << endl;
 	
 	// Check integration step was performed
-	if( intiflag == 1 && !no_calc ) cout << "Integration performed at each step\n";
+	if( intiflag && !no_calc ) cout << "Integration performed at each step\n";
 	else if( no_calc ) cout << "No calculations needed, results taken from chisq file\n\n";
 	else cout << "Integration performed with starting parameters only\n\n";
 
@@ -760,47 +731,46 @@ void scan::PrintStep( float dme, float tme,
 	
 }
 
+void scan::PrintHeader() {
+	
+	// Get chisq values and write to file
+	cout << "\n\t\t  Chi-squared value\n";
+	if( g2 ) cout << "  x\t  y\tProj\tTarg\tTotal\n";
+	else cout << "  x\t  y\tTotal\n";
+
+	return;
+	
+}
+
 void scan::do_step( string dirname, int i, int j, float dme, float tme ) {
 	
-	float chisq_proj, chisq_targ;
-	
+	// Variables
+	float chisq_proj, chisq_targ = 0.0;
+
 	// Write matrix elements
-	metest = WriteProjectileMatrixElementsToFile( dirname, dme, tme );
-	if( g2 )
-		metest = WriteTargetMatrixElementsToFile( dirname, dme, tme );
-	
-	if( metest == 1 )
-		cout << "Couldn't write projectile matrix elements to file\n";
-	
-	if( metest == 2 )
-		cout << "Couldn't write target matrix elements to file\n";
-	
-	if( metest > 0 ) exit(1);
-	
+	WriteProjectileMatrixElementsToFile( dirname, dme, tme );
+	if( g2 ) WriteTargetMatrixElementsToFile( dirname, dme, tme );
+
 	// Integration step
-	intiflag = IntegrateProjectile( dirname );
+	if( intiflag ) IntegrateProjectile( dirname );
 	
 	// Run Gosia2 or standard Gosia and return chisq values
-	if( g2 )
-		minitest = GetChiSq2( dirname, chisq_proj, chisq_targ );
-	
-	else
-		minitest = GetChiSq( dirname, chisq_proj );
-	
-	if ( minitest == 0 ) {
-		
-		cout << "Unable to run gosia\n";
-		exit(1);
-		
-	}
-	
-	no_calc = false;
-	
+	GetChiSq( dirname, std::ref(chisq_proj), std::ref(chisq_targ) );
+
 	chisq_proj *= Ndata_proj;
 	chisq_targ *= Ndata_targ;
 
-	PrintStep( dme, tme, chisq_proj, chisq_targ );
-	ro.AddChisqPoint( i, j, dme, tme, chisq_proj, chisq_targ );
+	{
+		// Lock the printing and ROOT access
+		std::unique_lock<std::mutex> lock(mlock);
+		
+		PrintStep( dme, tme, chisq_proj, chisq_targ );
+		ro.AddChisqPoint( i, j, dme, tme, chisq_proj, chisq_targ );
+		
+		// Update the flags
+		no_calc = false;
+
+	}
 	
 	return;
 	
@@ -812,23 +782,20 @@ void scan::run_scan() {
 	float chisq, chisq_proj, chisq_targ;
 	
 	// If continuing or reading old values, get last calculated values
-	if ( readflag ) ContinueScan();
+	if ( readflag ) {
+		ContinueScan();
+		PrintHeader();
+	}
 	
 	// Check if any calculations were performed
 	no_calc = true;
 
-	// Get chisq values and write to file
-	cout << "Ndata projectile: " << Ndata_proj << endl;
-	cout << "          target: " << Ndata_targ << endl;
-	cout << "\n\t\t  Chi-squared value\n";
-	if( g2 ) cout << "  x\t  y\tProj\tTarg\tTotal\n";
-	else cout << "  x\t  y\tTotal\n";
-
-	for ( int i=0; i<Nsteps_dme; i++ ) {
+	// Loop over matrix elements and check if we need to calculate chisq
+	for ( int i=0; i<Nsteps_dme; ++i ) {
 	
 		dme = low_dme + i*stepSize_dme;
 
-		for ( int j=0; j<Nsteps_tme; j++ ) {
+		for ( int j=0; j<Nsteps_tme; ++j ) {
 		
 			tme = low_tme + j*stepSize_tme;
 			
@@ -851,7 +818,10 @@ void scan::run_scan() {
 			
 			if ( do_calc ) {
 								
-				do_step( scandir[0], i, j, dme, tme );
+				i_todo.push_back( i );
+				j_todo.push_back( j );
+				dme_todo.push_back( dme );
+				tme_todo.push_back( tme );
 				
 			}
 			
@@ -864,11 +834,67 @@ void scan::run_scan() {
 				ro.AddChisqPoint( i, j, dme, tme, chisq_proj, chisq_targ );
 
 			}
+
+		}
+
+	}
+	
+	// How many calculations do we need to do?
+	int todo, each, left = 0;
+	todo = i_todo.size();
+	each = todo / Npara;
+	if( todo > 0 ) left = todo % ( Npara * each );
+	
+	cout << endl << "Total calculations to do   = " << todo << endl;
+	cout << "Number of parallel threads = " << Npara << endl;
+	cout << "Calculations per thread    = " << each << endl;
+	cout << "Left over calculations     = " << left << endl << endl;
+	
+	if( todo > 0 ) PrintHeader();
+
+	vector<std::thread> op;
+	for( int k = 0; k < each; ++k ){
+				
+		for( int l = 0; l < Npara; ++l ){
+			
+			int jobN = k + l*each;
+			
+			std::thread calc( &scan::do_step,
+							 this, scandir[l],
+							 i_todo[jobN], j_todo[jobN],
+							 dme_todo[jobN], tme_todo[jobN] );
+			
+			// Move to CPU of choice
+			cpu_set_t cpuset;
+			CPU_ZERO(&cpuset);
+			CPU_SET( l+1, &cpuset );
+			int rc = pthread_setaffinity_np(
+				calc.native_handle(), sizeof(cpu_set_t), &cpuset );
+			if( rc != 0 )
+				std::cerr << "Error calling pthread_setaffinity_np: " << rc << "\n";
+
+			// Move in to the vector
+			op.push_back( std::move( calc ) );
+
+		}
+				
+		// Join the threads
+		for( int m = 0; m < op.size(); ++m ) {
+			
+			if( op[m].joinable() ) op[m].join();
+			//else op.erase( op.begin()+m );
 			
 		}
 
 	}
 	
+	// Just linear for whatever is left over
+	for( int k = todo-left; k < todo; ++k ) {
+		
+		do_step( scandir[0], i_todo[k], j_todo[k], dme_todo[k], tme_todo[k] );
+		
+	}
+
 	ro.MakeCuts();
 	ro.WriteRootFile();
 	

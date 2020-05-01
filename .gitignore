@@ -2,5 +2,7 @@ bin
 working_example
 *~
 *.o
+*.pcm
+*_dict*
 *.xcworkspace
 .DS_Store

@@ -9,14 +9,81 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <thread>
+#include <future>
 using namespace std;
 
+#include <pthread.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/sysctl.h>
 
 #ifndef __rootobjs_hh__
 #include "rootobjs.hh"
+#endif
+
+//#ifndef __workers_hh__
+//#include "workers.hh"
+//#endif
+
+#if defined(__APPLE__)
+#include <mach/thread_policy.h>
+#include <mach/thread_act.h>
+
+#define SYSCTL_CORE_COUNT	"machdep.cpu.core_count"
+
+typedef struct cpu_set {
+	uint32_t    count;
+} cpu_set_t;
+
+const inline void
+CPU_ZERO( cpu_set_t *cs ) { cs->count = 0; }
+
+const inline void
+CPU_SET( int num, cpu_set_t *cs ) { cs->count |= (1 << num); }
+
+const inline int
+CPU_ISSET( int num, cpu_set_t *cs ) { return ( cs->count & (1 << num) ); }
+
+inline int sched_getaffinity( pid_t pid, size_t cpu_size, cpu_set_t *cpu_set ) {
+	
+	int32_t core_count = 0;
+	size_t len = sizeof(core_count);
+	int ret = sysctlbyname( SYSCTL_CORE_COUNT, &core_count, &len, 0, 0 );
+	
+	if( ret ) {
+		cout << "error while get core count " << ret;
+		return -1;
+	}
+	cpu_set->count = 0;
+	
+	for( int i = 0; i < core_count; i++ )
+		cpu_set->count |= (1 << i);
+	
+	return 0;
+	
+}
+
+inline int pthread_setaffinity_np( pthread_t thread, size_t cpu_size,
+						   cpu_set_t *cpu_set ) {
+	
+	thread_port_t mach_thread;
+	int core = 0;
+
+	for( core = 0; core < 8 * cpu_size; core++ ) {
+		if( CPU_ISSET( core, cpu_set ) ) break;
+	}
+	
+	//cout << "binding to core " << core << endl;
+	thread_affinity_policy_data_t policy = { core };
+	mach_thread = pthread_mach_thread_np( thread );
+	thread_policy_set( mach_thread, THREAD_AFFINITY_POLICY,
+					  (thread_policy_t)&policy, 1 );
+	
+	return 0;
+	
+}
 #endif
 
 class scan {
@@ -28,37 +95,38 @@ public:
 	~scan();
 	
 	// Lookup functions
-	int		LookUpOldChisq( float dme, float tme );
-	void	ContinueScan();
-	string	FindFileName( string in_file, string tape );
-	double	ReadChiSqFromFile( string gosiaoutfile );
-	int		GetChiSq( string dirname, float &chisq_proj );
-	int		GetChiSq2( string dirname, float &chisq_proj, float &chisq_targ );
+	int			LookUpOldChisq( float dme, float tme );
+	void		ContinueScan();
+	std::string	FindFileName( string in_file, string tape );
+	void		ReadChiSqFromFile( string gosiaoutfile, float &chisq );
+	void		GetChiSq( string dirname, float &chisq_proj, float &chisq_targ );
 
 	// Execution functions
-	int		IntegrateProjectile( string dirname );
-	int		WriteProjectileMatrixElementsToFile( string dirname, float dme, float tme );
-	int		WriteTargetMatrixElementsToFile( string dirname, float dme, float tme );
-
+	void		IntegrateProjectile( string dirname );
+	void		WriteProjectileMatrixElementsToFile( string dirname, float dme, float tme );
+	void		WriteTargetMatrixElementsToFile( string dirname, float dme, float tme );
+	void		RunCmd( std::string cmd );
+	
 	// Main functions
-	void	run_scan();
-	void	do_step( string dirname, int i, int j, float dme, float tme );
+	void		run_scan();
+	void		do_step( string dirname, int i, int j, float dme, float tme );
 	
 	// Getting the files
-	void	MakeScanDirectories();
-	void	GetAuxFiles();
-	void	CopyFileForScan( string filename );
-	void	OpenOutputFiles();
-	void	CloseOutputs();
-	void	CleanDirectories();
-	
+	void		MakeScanDirectories();
+	void		GetAuxFiles();
+	void		CopyFileForScan( string filename );
+	void		OpenOutputFiles();
+	void		CloseOutputs();
+	void		CleanDirectories();
+
 	// Some nice functions
-	string	getDateTime();
-	void	PrintStep( float dme, float tme, float chisq_proj, float chisq_targ);
-	void	PrintResults();
-	
+	std::string	getDateTime();
+	void		PrintStep( float dme, float tme, float chisq_proj, float chisq_targ);
+	void		PrintResults();
+	void		PrintHeader();
+
 	// Main Setup Function
-	void	SetupScan( string _in_proj, string _intifile,
+	void	SetupScan( std::string _in_proj, std::string _intifile,
 					   float _dme_index, float _tme_index,
 					   float _low_dme, float _upp_dme, int _Nsteps_dme,
 					   float _low_tme, float _upp_tme, int _Nsteps_tme,
@@ -70,26 +138,32 @@ public:
 private:
 	
 	// Scan Variables
-	string intifile;
-	string in_proj;
-	string in_targ;
-	string out_proj;
-	string out_targ;
-	string bst_proj;
-	string bst_targ;
-	string cor_proj;
-	string cor_targ;
-	string yld_proj;
-	string yld_targ;
-	string map_proj;
-	string map_targ;
-	string raw_proj;
-	string gdt_proj;
+	std::string intifile;
+	std::string in_proj;
+	std::string in_targ;
+	std::string out_proj;
+	std::string out_targ;
+	std::string bst_proj;
+	std::string bst_targ;
+	std::string cor_proj;
+	std::string cor_targ;
+	std::string yld_proj;
+	std::string yld_targ;
+	std::string map_proj;
+	std::string map_targ;
+	std::string raw_proj;
+	std::string gdt_proj;
 
-	string scanname;
-	string maindir;
-	vector<string> scandir;
-	string tstamp;
+	std::string scanname;
+	std::string maindir;
+	std::vector<std::string> scandir;
+	std::string tstamp;
+	std::mutex mlock;
+	
+	std::vector<int> i_todo;
+	std::vector<int> j_todo;
+	std::vector<float> dme_todo;
+	std::vector<float> tme_todo;
 
 	int tme_index;
 	int dme_index;
@@ -110,24 +184,22 @@ private:
 	
 	rootobjs ro;
 
-	string outname;
-	vector<string> textname;
-	vector<ofstream*> out;
-	ofstream outa, outb;
-	ofstream rslt;
-	ifstream old;
-	string rsltname;
-	string rootname;
+	std::string outname;
+	std::vector<std::string> textname;
+	std::vector<std::ofstream*> out;
+	std::ofstream outa, outb;
+	std::ofstream rslt;
+	std::ifstream old;
+	std::string rsltname;
+	std::string rootname;
 	
-	int intiflag;
-	int metest;
-	int minitest;
+	bool intiflag;
 	bool do_calc;
 	bool no_calc;
 	float stepSize_dme;
 	float stepSize_tme;
 
-	vector<float> result_vector;
+	std::vector<float> result_vector;
 	int index;
 
 };

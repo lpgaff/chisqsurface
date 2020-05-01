@@ -25,6 +25,9 @@ ifeq ($(PLATFORM),Darwin)
 	INCLUDES += -I/opt/local/include
 	LIBS     += -L/opt/local/lib
 endif
+ifeq ($(PLATFORM),Linux)
+	export __LINUX__:= 1
+endif
 
 
 all: chisqsurface
@@ -43,7 +46,6 @@ chisqsurface: chisqsurface.cc $(OBJECTS)
 
 %.o: %.cc %.hh
 	$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
 
 %_dict.o: %_dict.cc
 	$(CXX) $(CFLAGS) $(INCLUDES) -c $<

@@ -70,8 +70,9 @@ int main( int argc, char* argv[] ) {
 		
 		else {
 			
-			intifile = in_proj.substr( 0, in_proj.find_last_of(".") );
-			intifile += ".INTI.inp";
+			cout << "No INTI file given, ";
+			cout << "so integration will not be performed" << endl;
+			intifile = "empty";
 			
 		}
 		
@@ -124,6 +125,10 @@ int main( int argc, char* argv[] ) {
 			exit(1);
 			
 		}
+		
+		// Summarise data input
+		cout << "Ndata projectile: " << Ndata_proj << endl;
+		if( g2 ) cout << "          target: " << Ndata_targ << endl;
 		
 		// Matrix element indicies - "DME" or x-axis
 		if( result.count("x") ) {

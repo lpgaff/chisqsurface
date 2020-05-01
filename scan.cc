@@ -348,8 +348,6 @@ void scan::LookUpOldChisq( float xme, float yme, float &chisq_proj, float &chisq
 	
 	for ( unsigned int i = 0; i < result_vector.size()/5; i++ ) {
 	
-		cout << xme << "\t" << result_vector[5*i+0] << endl;
-		
 		if ( TMath::Abs( xme - result_vector[5*i+0] ) < 1E-6 ) {
 			
 			if ( TMath::Abs( yme - result_vector[5*i+1] ) < 1E-6 ) {
@@ -359,6 +357,7 @@ void scan::LookUpOldChisq( float xme, float yme, float &chisq_proj, float &chisq
 				do_calc = false;
 				
 			}
+			
 		}
 			
 	}

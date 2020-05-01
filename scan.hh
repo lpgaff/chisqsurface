@@ -19,6 +19,10 @@ using namespace std;
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
+#if defined(__LINUX__)
+#include <linux/limits.h>
+#endif
+
 #ifndef __rootobjs_hh__
 #include "rootobjs.hh"
 #endif

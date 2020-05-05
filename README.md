@@ -5,7 +5,12 @@ chisqsurface
 DESCRIPTION
 -----------
 
-chisqsurface takes a gosia or gosia2 input file with the OP,MINI command and calculates the 2-dimensional chi^2 surface for a given range and number of transitional and diagonal matrix elements. The output is in the form of a simple text file of chi^2 values and a root file with many graphs and histograms including chi^2 + 1 cuts.
+chisqsurface takes a gosia or gosia2 input file with the OP,MINI command and calculates the 2-dimensional chi^2 surface for a given range and number of transitional and diagonal matrix elements.
+The output is in the form of a simple text file of chi^2 values and a root file with many graphs and histograms including chi^2 + 1 cuts.
+
+It is possible to run `chisqsurface` in parallel mode now, using the `-p, --parallel N` option, but the scheduling is left to the OS, so performance imporvement over single-threaded operation cannot be guaranteed.
+For example, it has been observed on macOS that the kernel allows only one thread to execute at a time, whereas Ubuntu sometimes allows the maximum and sometimes only a single thread.
+The code has been observed to run up to 20 parallel operations on a computing cluster, but it's unreliable behaviour at the moment.
 
 
 REQUIREMENTS
@@ -16,9 +21,6 @@ You will need a compiler that accepts the c++11 standard or greater.
 ROOT (root.cern.ch) must be installed and directories set correctly (i.e. using thisroot.sh).
 Further to this, gosia and gosia2 must be installed (with names "gosia" and "gosia2", respectively) and your PATH variable should point their directory(s).
 Please check the Makefile and define the BINDIR for your needs.
-
-In version 2, currently in development, your compiler will have to have the C++17 standard and above.
-This is to use the filesystem libraries available from this version onwards. However, as a compromise, I am currently using the old C versions, which will only work on Linux, so forget Windows portability!
 
 
 USAGE
@@ -41,6 +43,8 @@ Usage:
       --x-upp value    Upper limit for x-axis matrix element
       --y-low value    Lower limit for y-axis matrix element
       --y-upp value    Upper limit for y-axis matrix element
+      --nm N           Number of minimisation calls per step
+  -p, --parallel N     Number of parallel calculations
       --g1             Standard Gosia selector
       --g2             Gosia2 selector (default)
   -h, --help           Print help
@@ -70,7 +74,6 @@ OP,EXIT
 ```
 
 This should not be done for the target in a Gosia2 calculation, where a certain amount of minimisation should be allowed, say 20 steps, with a reasonable chisq condition of ~0.001.
-If making a full correlated error analysis using standard Gosia, then you will also want to perform a full minimisation at each step, but the matrix elements of interest should then be fixed in the ME section. This can be done by setting the lower and upper limits to be equal (as per the Gosia manual).
 
 ```
 OP,REST
@@ -80,7 +83,9 @@ OP,MINI
 OP,EXIT
 ```
 
-In order to run the integration step for each point on the surface, you must have an OP,INTI file in the same directory. If your input file is named "example.inp", then your integration file should be named "example.INTI.inp" so that the code can run the integration step for each meshpoint. If it is named something different, it must be specified on the command line using the `-i` or `--inti` option. If it doesn't exist at all (or you specify `--inti=dummy`), then the integration is skipped.
+If making a full correlated error analysis using standard Gosia, then you will also want to perform a full minimisation at each step, but the matrix elements of interest should then be fixed in the ME section. This can be done by setting the lower and upper limits to be equal (as per the Gosia manual).
+
+In order to run the integration step for each point on the surface, you must have an OP,INTI file, passed by the  `-i` or `--inti` option. If your input file is missing, or you specify `--inti=dummy`, then the integration is skipped. This is strongly discouraged for quantative analysis and should be reserved for quick scans to assess the approximate range only.
 
 Finally, you should make sure that you have a copy of your best-fit matrix elements (both the target and projectile as appropriate) in a separate file, appended by '.lit'.
 i.e. if your matrix element file is '202Rn.bst', then you need a copy of this file with the name '202Rn.bst.lit' to use as a starting point for each new iteration.
@@ -89,7 +94,13 @@ Same goes for a target matrix element file, which may be called '109Ag.me' and y
 OUTPUT
 ------
 
-The output is given in two formats, a root file with a 2D graph of the data (including one cut at chisq+1) plus individual curves for every DME point, and a text file with an ascii list of the data. Each will be the projectile input file name appended with '.root' and '.chisq' respectively.
+The scan is run in a new sub-directory, `scan_YYYYMMDD_hhmmss`, copying all relevant files to that location to preserve the scan conditions for future reference.
+Within that subfolder, there are further folders where the integration and minimisations takes place for each of the parallel calculations.
+
+The output is given in two formats, a root file with a 2D graph of the data (including one cut at chisq+1) plus individual curves for every DME point, and a text file with an ascii list of the data.
+Each will be the projectile input file name appended with '.root' and '.chisq' respectively and placed in the scan directory.
+A copy of the '.chisq' file stays in the top-level directory to be read by a future invocation of `chisqsurface`.
+It's this top-level file that you should edit/overwrite to continue a calculation, the original version remains in the scan folder.
 
 Further, a '.rslt' file is written with the 1 sigma limits extracted using the chisq+1 method. This is only valid when the full chisq+1 range is covered in the calculation.
 

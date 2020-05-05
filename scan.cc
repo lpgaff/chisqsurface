@@ -855,15 +855,6 @@ void scan::run_scan() {
 							 this, scandir[l],
 							 i_todo[jobN], j_todo[jobN],
 							 xme_todo[jobN], yme_todo[jobN] );
-			
-			// Move to CPU of choice
-			cpu_set_t cpuset;
-			CPU_ZERO(&cpuset);
-			CPU_SET( l+1, &cpuset );
-			int rc = pthread_setaffinity_np(
-				calc.native_handle(), sizeof(cpu_set_t), &cpuset );
-			if( rc != 0 )
-				std::cerr << "Error calling pthread_setaffinity_np: " << rc << "\n";
 
 			// Move in to the vector
 			op.push_back( std::move( calc ) );

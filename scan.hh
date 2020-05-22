@@ -23,6 +23,10 @@ using namespace std;
 #include <linux/limits.h>
 #endif
 
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 #ifndef __rootobjs_hh__
 #include "rootobjs.hh"
 #endif

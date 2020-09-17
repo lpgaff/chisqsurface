@@ -1,5 +1,5 @@
 chisqsurface 
-[![DOI](https://zenodo.org/badge/19616357.svg)](https://zenodo.org/badge/latestdoi/19616357)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4034966.svg)](https://doi.org/10.5281/zenodo.4034966)
 ========================
 
 DESCRIPTION

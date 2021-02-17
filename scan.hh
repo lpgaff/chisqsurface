@@ -80,8 +80,8 @@ public:
 					   float _low_xme, float _upp_xme, int _Nsteps_xme,
 					   float _low_yme, float _upp_yme, int _Nsteps_yme,
 					   int _Ndata_proj, int _Ndata_targ,
-					   int _Nmini, int _Npara,
-					   bool _g2, bool _readflag, rootobjs ro );
+					   int _Nmini, int _Npara, bool _g2,
+					   bool _readflag, std::string _prevscan, rootobjs ro );
 
 
 private:
@@ -104,6 +104,7 @@ private:
 	std::string gdt_proj;
 
 	std::string scanname;
+	std::string prevscan;
 	std::string maindir;
 	std::vector<std::string> scandir;
 	std::string tstamp;
@@ -134,9 +135,8 @@ private:
 	rootobjs ro;
 
 	std::string outname;
-	std::vector<std::string> textname;
-	std::vector<std::ofstream*> out;
-	std::ofstream outa, outb;
+	std::string textname, oldname;
+	std::ofstream out;
 	std::ofstream rslt;
 	std::ifstream old;
 	std::string rsltname;

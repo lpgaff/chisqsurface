@@ -23,8 +23,8 @@ void scan::SetupScan( string _in_proj, string _intifile,
 					  float _low_xme, float _upp_xme, int _Nsteps_xme,
 					  float _low_yme, float _upp_yme, int _Nsteps_yme,
 					  int _Ndata_proj, int _Ndata_targ,
-					  int _Nmini, int _Npara,
-					  bool _g2, bool _readflag, rootobjs _ro ) {
+					  int _Nmini, int _Npara, bool _g2,
+					  bool _readflag, std::string _prevscan, rootobjs _ro ) {
 	
 	// Assign variables for the scan
 	in_proj = _in_proj;
@@ -50,6 +50,7 @@ void scan::SetupScan( string _in_proj, string _intifile,
 
 	g2 = _g2;
 	readflag = _readflag;
+	prevscan = _prevscan;
 	ro = _ro;
 	
 	tstamp = getDateTime();
@@ -290,20 +291,20 @@ void scan::OpenOutputFiles(){
 	// Open output text and root files
 	//  if continuing, read output file first
 	//  if not, copy old files to ...old
-	outname = in_proj.substr( 0, in_proj.find_last_of(".") );
-	textname.push_back( outname + ".chisq" );
-	textname.push_back( scanname + "/" + outname + ".chisq" );
+	outname  = in_proj.substr( 0, in_proj.find_last_of(".") );
+	oldname  = prevscan + "/" + outname + ".chisq";
+	textname = scanname + "/" + outname + ".chisq";
 	rsltname = scanname + "/" + outname + ".rslt";
 	rootname = scanname + "/" + outname + ".root";
 	string cmd;
 	
 	if( readflag ){
 		
-		old.open( textname[0].data(), ios::in );
+		old.open( oldname.data(), ios::in );
 		
 		if( !old.is_open() ) {
 			
-			cout << "Couldn't open " << textname[0] << endl;
+			cout << "Couldn't open " << oldname << endl;
 			cout << "Cannot read previous results, starting fresh " << endl;
 			readflag = false;
 			
@@ -311,15 +312,7 @@ void scan::OpenOutputFiles(){
 	
 	}
 	
-	if( !readflag ) {
-		
-		outa.open( textname[0].data(), ios::out );
-		outb.open( textname[1].data(), ios::out );
-		out.push_back( &outa );
-		out.push_back( &outb );
-		
-	}
-
+	out.open( textname.data(), ios::out );
 	rslt.open( rsltname.data(), ios::out );
 	ro.OpenRootFile( rootname );
 
@@ -329,12 +322,11 @@ void scan::OpenOutputFiles(){
 
 void scan::CloseOutputs() {
 	
-	for ( int k = 0; k < 2; k++ ) out[k]->close();
+	out.close();
 	rslt.close();
-	out.resize(0);   // clean up outfile vector
 
 	cout << "I wrote the data to...\n\tROOT file: " << rootname << endl;
-	cout << "\tTEXT files: " << textname[0] << " and " << textname[1] << endl;
+	cout << "\tTEXT file: " << textname << endl;
 	cout << "I wrote the results to " << rsltname << endl;
 	
 	return;
@@ -391,18 +383,14 @@ void scan::ContinueScan() {
 		cout << "\nRead array of " << int(result_vector.size()/5);
 		cout << " results from previous calculation...\n";
 		
-		// Reopen file for writing
+		// Finished with old results file
 		old.close();
-		outa.open( textname[0].data(), ios::out );
-		outb.open( textname[1].data(), ios::out );
-		out.push_back( &outa );
-		out.push_back( &outb );
 				
 	}
 	
 	else {
 		
-		cout << "Cannot open " << textname[0].data() << " in order to resume\n";
+		cout << "Cannot open " << oldname << " in order to resume\n";
 		readflag = false;
 		
 	}
@@ -723,12 +711,8 @@ void scan::PrintStep( float xme, float yme,
 	else cout << chisq << endl;
 
 	// Print to file
-	for ( int k = 0; k < 2; k++ ) {
-		
-		(*out[k]) << xme << "\t" << yme << "\t";
-		(*out[k]) << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
-		
-	}
+	out << xme << "\t" << yme << "\t";
+	out << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
 	
 	return;
 	

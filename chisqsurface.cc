@@ -29,8 +29,8 @@ int main( int argc, char* argv[] ) {
 		( "p,parallel", "Number of parallel calculations", cxxopts::value<int>(), "N" )
 		( "g1", "Standard Gosia selector" )
 		( "g2", "Gosia2 selector (default)" )
+		( "r,read", "Read previous results from specified scan folder",	cxxopts::value<string>(), "folder" )
 		( "h,help", "Print help" )
-		( "r,read", "Read previous results and continue" )
 		;
 		
 		options.parse_positional( { "mini", "np" } );
@@ -250,6 +250,7 @@ int main( int argc, char* argv[] ) {
 		if( result.count("r") ) {
 			
 			readflag = true;
+			prevscan = result["r"].as<string>();
 			
 		}
 
@@ -279,8 +280,8 @@ int main( int argc, char* argv[] ) {
 		    low_xme, upp_xme, Nsteps_xme,
 		    low_yme, upp_yme, Nsteps_yme,
 			Ndata_proj, Ndata_targ,
-			Nmini, Npara,
-		    g2, readflag, ro );
+			Nmini, Npara, g2,
+			readflag, prevscan, ro );
 	
 	// Then actually perform the scanning procedure
 	s.run_scan();

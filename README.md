@@ -48,7 +48,7 @@ Usage:
       --g1             Standard Gosia selector
       --g2             Gosia2 selector (default)
   -h, --help           Print help
-  -r, --read           Read previous results and continue
+  -r, --read folder    Read previous results from specified scan folder
 
 ```
 `np` and `nt` includes the sum of all g-ray yields, matrix elements, lifetimes, etc.

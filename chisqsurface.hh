@@ -28,6 +28,7 @@ int Nsteps_xme = 1;
 int Nmini = 1;
 int Npara = 1;		// default back to linear mode
 bool readflag = false;
+string prevscan;
 bool g2 = true;		// default, gosia2
 int yme_index = 1;	// default, index 1
 int xme_index = 2;	// default, index 2

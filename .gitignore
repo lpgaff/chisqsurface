@@ -1,5 +1,6 @@
 bin
 working_example
+test_example
 *~
 *.o
 *.pcm

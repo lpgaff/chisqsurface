@@ -23,6 +23,18 @@ Further to this, gosia and gosia2 must be installed (with names "gosia" and "gos
 Please check the Makefile and define the BINDIR for your needs.
 
 
+INSTALLATION
+------------
+
+Download the code and build it with the following steps
+```bash
+git clone https://github.com/lpgaff/chisqsurface
+cd chisqsurface
+make
+```
+You then need to add the bin directory to your PATH variable if you want to run it from anywhere, i.e. `export PATH=$PATH:/path/to/chisqsurface/bin`
+
+
 USAGE
 -----
 

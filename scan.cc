@@ -78,12 +78,12 @@ void scan::MakeScanDirectories() {
 
 	scanname = "scan_" + tstamp;
 	cout << "Scan outputs in " << scanname << endl;
-	mkdir( scanname.data(), 0755 );
+	::mkdir( scanname.data(), 0755 );
 
 	for( int i = 0; i < Npara; ++i ){
 		
 		dirname_tmp = scanname + "/" + to_string(i);
-		mkdir( dirname_tmp.data(), 0755 );
+		::mkdir( dirname_tmp.data(), 0755 );
 		scandir.push_back( dirname_tmp );
 
 	}

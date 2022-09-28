@@ -11,13 +11,11 @@
 #include <vector>
 #include <thread>
 #include <future>
-using namespace std;
 
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/sysctl.h>
 
 #if defined(__LINUX__)
 #include <linux/limits.h>

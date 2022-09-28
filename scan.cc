@@ -8,17 +8,17 @@
 
 scan::scan(){
 	
-	//cout << Constructor << endl;
+	//std::cout << Constructor << std::endl;
 
 }
 
 scan::~scan(){
 	
-	//cout << Destructor << endl;
+	//std::cout << Destructor << std::endl;
 	
 }
 
-void scan::SetupScan( string _in_proj, string _intifile,
+void scan::SetupScan( std::string _in_proj, std::string _intifile,
 					  float _xme_index, float _yme_index,
 					  float _low_xme, float _upp_xme, int _Nsteps_xme,
 					  float _low_yme, float _upp_yme, int _Nsteps_yme,
@@ -70,19 +70,19 @@ void scan::MakeScanDirectories() {
 	
 	// Return current working directory
 	char buff[PATH_MAX];
-	getcwd( buff, PATH_MAX );
+	::getcwd( buff, PATH_MAX );
 	maindir = buff;
 
-	string dirname_tmp;
-	cout << "Running in " << maindir << endl;
+	std::string dirname_tmp;
+	std::cout << "Running in " << maindir << std::endl;
 
 	scanname = "scan_" + tstamp;
-	cout << "Scan outputs in " << scanname << endl;
+	std::cout << "Scan outputs in " << scanname << std::endl;
 	::mkdir( scanname.data(), 0755 );
 
 	for( int i = 0; i < Npara; ++i ){
 		
-		dirname_tmp = scanname + "/" + to_string(i);
+		dirname_tmp = scanname + "/" + std::to_string(i);
 		::mkdir( dirname_tmp.data(), 0755 );
 		scandir.push_back( dirname_tmp );
 
@@ -94,11 +94,11 @@ void scan::MakeScanDirectories() {
 
 void scan::CleanDirectories() {
 	
-	//cout << "Scan directories have not been deleted" << endl;
+	//cout << "Scan directories have not been deleted" << std::endl;
 
 	//for( unsigned int i = 0; i < scandir.size(); ++i ){
 	//
-	//	cout << "rm -rf " << scandir[i] << endl;
+	//	cout << "rm -rf " << scandir[i] << std::endl;
 	//
 	//}
 	
@@ -108,7 +108,7 @@ void scan::CleanDirectories() {
 
 void scan::GetAuxFiles(){
 	
-	string bstlit;
+	std::string bstlit;
 	
 	// Copy INTI and MINI files
 	CopyFileForScan( in_proj );
@@ -154,7 +154,7 @@ void scan::GetAuxFiles(){
 	
 		if( in_targ == "empty" ) {
 			
-			cout << "Check your input files if you want to use Gosia2\n";
+			std::cout << "Check your input files if you want to use Gosia2\n";
 			exit(1);
 			
 		}
@@ -199,12 +199,12 @@ void scan::GetAuxFiles(){
 	
 }
 
-void scan::CopyFileForScan( string filename ){
+void scan::CopyFileForScan( std::string filename ){
 	
-	string newfilename = scanname + "/" + filename;
+	std::string newfilename = scanname + "/" + filename;
 	
-	ifstream source( filename );
-	ofstream dest( newfilename );
+	std::ifstream source( filename );
+	std::ofstream dest( newfilename );
 	
 	dest << source.rdbuf();
 	dest.close();
@@ -227,26 +227,26 @@ void scan::CopyFileForScan( string filename ){
 	
 }
 
-string scan::getDateTime() {
+std::string scan::getDateTime() {
 	
 	// get time now
 	time_t t = time(0);
 	struct tm * now = localtime( & t );
 
 	// make it into a nice string YYYYMMDD-HHMMSS
-	string date_string = to_string( now->tm_year + 1900 );
+	std::string date_string = std::to_string( now->tm_year + 1900 );
 	if ( now->tm_mon < 9 ) date_string += "0";
-	date_string += to_string( now->tm_mon + 1 );
+	date_string += std::to_string( now->tm_mon + 1 );
 	if ( now->tm_mday < 10 ) date_string += "0";
-	date_string += to_string( now->tm_mday );
+	date_string += std::to_string( now->tm_mday );
 	
 	date_string += "_";
 	if ( now->tm_hour < 10 ) date_string += "0";
-	date_string += to_string( now->tm_hour );
+	date_string += std::to_string( now->tm_hour );
 	if ( now->tm_min < 10 ) date_string += "0";
-	date_string += to_string( now->tm_min );
+	date_string += std::to_string( now->tm_min );
 	if ( now->tm_sec < 10 ) date_string += "0";
-	date_string += to_string( now->tm_sec );
+	date_string += std::to_string( now->tm_sec );
 	
 	return date_string;
 
@@ -260,8 +260,8 @@ void scan::RunCmd( std::string cmd ){
 	if( system(NULL) ) status = system( cmd.data() );
 	else {
 		
-		cerr << "Cannot run system command:" << endl;
-		cerr << "\t" << cmd << endl;
+		cerr << "Cannot run system command:" << std::endl;
+		cerr << "\t" << cmd << std::endl;
 		exit( status );
 
 	}
@@ -270,7 +270,7 @@ void scan::RunCmd( std::string cmd ){
 	if( status == 512 ) {
 		
 		cerr << "Check that this command runs correctly:";
-		cerr << "\t" << cmd << endl;
+		cerr << "\t" << cmd << std::endl;
 		exit( status );
 
 	}
@@ -296,7 +296,7 @@ void scan::OpenOutputFiles(){
 	textname = scanname + "/" + outname + ".chisq";
 	rsltname = scanname + "/" + outname + ".rslt";
 	rootname = scanname + "/" + outname + ".root";
-	string cmd;
+	std::string cmd;
 	
 	if( readflag ){
 		
@@ -304,8 +304,8 @@ void scan::OpenOutputFiles(){
 		
 		if( !old.is_open() ) {
 			
-			cout << "Couldn't open " << oldname << endl;
-			cout << "Cannot read previous results, starting fresh " << endl;
+			std::cout << "Couldn't open " << oldname << std::endl;
+			std::cout << "Cannot read previous results, starting fresh " << std::endl;
 			readflag = false;
 			
 		}
@@ -325,9 +325,9 @@ void scan::CloseOutputs() {
 	out.close();
 	rslt.close();
 
-	cout << "I wrote the data to...\n\tROOT file: " << rootname << endl;
-	cout << "\tTEXT file: " << textname << endl;
-	cout << "I wrote the results to " << rsltname << endl;
+	std::cout << "I wrote the data to...\n\tROOT file: " << rootname << std::endl;
+	std::cout << "\tTEXT file: " << textname << std::endl;
+	std::cout << "I wrote the results to " << rsltname << std::endl;
 	
 	return;
 	
@@ -380,8 +380,8 @@ void scan::ContinueScan() {
 		
 		chisq = chisq_proj = chisq_targ = 999.;
 		
-		cout << "\nRead array of " << int(result_vector.size()/5);
-		cout << " results from previous calculation...\n";
+		std::cout << "\nRead array of " << int(result_vector.size()/5);
+		std::cout << " results from previous calculation...\n";
 		
 		// Finished with old results file
 		old.close();
@@ -390,7 +390,7 @@ void scan::ContinueScan() {
 	
 	else {
 		
-		cout << "Cannot open " << oldname << " in order to resume\n";
+		std::cout << "Cannot open " << oldname << " in order to resume\n";
 		readflag = false;
 		
 	}
@@ -398,14 +398,14 @@ void scan::ContinueScan() {
 	
 }
 
-string scan::FindFileName( string in_file, string tape ) {
+std::string scan::FindFileName( std::string in_file, std::string tape ) {
 	
 	// Open gosia input file for projectile and find the output file name
-	ifstream gin;
+	std::ifstream gin;
 	gin.open( in_file.data(), ios::in );
 	if( !gin.is_open() ) {
 		
-		cout << "Unable to open " << in_file << endl;
+		std::cout << "Unable to open " << in_file << std::endl;
 		exit(1);
 		
 	}
@@ -413,10 +413,10 @@ string scan::FindFileName( string in_file, string tape ) {
 	// Search for tape 26 (or other)
 	bool flag1 = false;
 	bool flag2 = false;
-	string line1, line2, tmp;
-	string qry1 = "OP,FILE";
-	string qry2 = "OP,";
-	string filename = "empty";
+	std::string line1, line2, tmp;
+	std::string qry1 = "OP,FILE";
+	std::string qry2 = "OP,";
+	std::string filename = "empty";
  
 	getline( gin,line1 );
 	while ( !gin.eof() && !flag1 ) {
@@ -452,31 +452,31 @@ string scan::FindFileName( string in_file, string tape ) {
 	
 	gin.close();
 	
-	if( !flag1 ) cout << "Couldn't find OP,FILE in " << in_file << endl;
-	if( !flag2 ) cout << "Couldn't find tape number " << tape << " in " << in_file << endl;
-	else cout << "Found tape number " << tape << ": " << filename << endl;
+	if( !flag1 ) std::cout << "Couldn't find OP,FILE in " << in_file << std::endl;
+	if( !flag2 ) std::cout << "Couldn't find tape number " << tape << " in " << in_file << std::endl;
+	else std::cout << "Found tape number " << tape << ": " << filename << std::endl;
 	
 	return filename;
 	
 }
 
-void scan::ReadChiSqFromFile( string gosiaoutfile, float &chisq ) {
+void scan::ReadChiSqFromFile( std::string gosiaoutfile, float &chisq ) {
 
 	// Open gosia output file for projectile or target. Get from input
-	ifstream g2out;
+	std::ifstream g2out;
 	g2out.open( gosiaoutfile.data(), ios::in );
 	if( !g2out.is_open() ) {
 	
-		cout << "Unable to open " << gosiaoutfile << endl;
+		std::cout << "Unable to open " << gosiaoutfile << std::endl;
 		exit(1);
 
 	}
 	
 	// Search for chisq value in file
 	bool flag = false;
-	string line, tmp;
-	string qry = "     *** CHISQ=";
-	stringstream gosia_chisq (stringstream::in | stringstream::out);
+	std::string line, tmp;
+	std::string qry = "     *** CHISQ=";
+	std::stringstream gosia_chisq (std::stringstream::in | std::stringstream::out);
 	float chisq_tmp;
  
 	getline(g2out,line);
@@ -498,7 +498,7 @@ void scan::ReadChiSqFromFile( string gosiaoutfile, float &chisq ) {
 	
 	if( !flag ) {
 		
-		cout << "Couldn't find chisq value in " << gosiaoutfile << endl;
+		std::cout << "Couldn't find chisq value in " << gosiaoutfile << std::endl;
 		exit(1);
 		
 	}
@@ -509,16 +509,16 @@ void scan::ReadChiSqFromFile( string gosiaoutfile, float &chisq ) {
 
 }
 
-void scan::GetChiSq( string dirname, float &chisq_proj, float &chisq_targ ) {
+void scan::GetChiSq( std::string dirname, float &chisq_proj, float &chisq_targ ) {
 	
-	string cmd = "cd " + dirname + " && ";
+	std::string cmd = "cd " + dirname + " && ";
 	if( g2 ) cmd.append( "gosia2 < " );
 	else cmd.append( "gosia < " );
 	cmd.append( in_proj );
 	cmd.append( " > /dev/null 2>&1" );
 	
-	string outfile_p = dirname + "/" + out_proj;
-	string outfile_t = dirname + "/" + out_targ;
+	std::string outfile_p = dirname + "/" + out_proj;
+	std::string outfile_t = dirname + "/" + out_targ;
 	
 	// Run gosia Nmini times with system command
 	for( int i = 0; i < Nmini; i++ ) {
@@ -535,17 +535,17 @@ void scan::GetChiSq( string dirname, float &chisq_proj, float &chisq_targ ) {
 	
 }
 
-void scan::IntegrateProjectile( string dirname ) {
+void scan::IntegrateProjectile( std::string dirname ) {
 
-	string line;
-	string cmd = "cd " + dirname + " && ";
+	std::string line;
+	std::string cmd = "cd " + dirname + " && ";
 	
-	ifstream inti;
-	string infile = dirname + "/" + intifile;
+	std::ifstream inti;
+	std::string infile = dirname + "/" + intifile;
 	inti.open( infile.data(), ios::in );
 	if( !inti.is_open() ) {
 		
-		cerr << "Cannot open " << infile << endl;
+		cerr << "Cannot open " << infile << std::endl;
 		exit(2);
 		
 	}
@@ -573,12 +573,12 @@ void scan::IntegrateProjectile( string dirname ) {
 	
 }
 
-void scan::WriteProjectileMatrixElementsToFile( string dirname, float xme, float yme ) {
+void scan::WriteProjectileMatrixElementsToFile( std::string dirname, float xme, float yme ) {
 	
-	string bstname;
-	string litname;
-	ofstream mefile;
-	ifstream litfile;
+	std::string bstname;
+	std::string litname;
+	std::ofstream mefile;
+	std::ifstream litfile;
 	
 	float tmp;
 	int index = 1;
@@ -591,14 +591,14 @@ void scan::WriteProjectileMatrixElementsToFile( string dirname, float xme, float
 	litfile.open( litname.data(), ios::in );
 	if( !mefile.is_open() ) {
 		
-		cerr << "Cannot open " << bstname << endl;
+		cerr << "Cannot open " << bstname << std::endl;
 		exit(2);
 
 	}
 	
 	if( !litfile.is_open() ) {
 		   
-		cerr << "Cannot open " << litname << endl;
+		cerr << "Cannot open " << litname << std::endl;
 		exit(2);
 
 	}
@@ -609,21 +609,21 @@ void scan::WriteProjectileMatrixElementsToFile( string dirname, float xme, float
 		
 		if ( index == yme_index ) {
 			
-			mefile << yme << endl; // write current yme
+			mefile << yme << std::endl; // write current yme
 			litfile >> tmp; // dump initial yme value and read next one
 			
 		}
 		
 		else if ( index == xme_index ) {
 			
-			mefile << xme << endl; // write current xme
+			mefile << xme << std::endl; // write current xme
 			litfile >> tmp; // dump initial xme value and read next one
 			
 		}
 		
 		else {
 			
-			mefile << tmp << endl;	// write to file if there is a next value
+			mefile << tmp << std::endl;	// write to file if there is a next value
 			litfile >> tmp;	 // continue reading
 			
 		}
@@ -639,12 +639,12 @@ void scan::WriteProjectileMatrixElementsToFile( string dirname, float xme, float
 	
 }
 
-void scan::WriteTargetMatrixElementsToFile( string dirname, float xme, float yme ) {
+void scan::WriteTargetMatrixElementsToFile( std::string dirname, float xme, float yme ) {
 	
-	string bstname;
-	string litname;
-	ofstream mefile;
-	ifstream litfile;
+	std::string bstname;
+	std::string litname;
+	std::ofstream mefile;
+	std::ifstream litfile;
 
 
 	// Target matrix elements, copy from backup file
@@ -654,7 +654,7 @@ void scan::WriteTargetMatrixElementsToFile( string dirname, float xme, float yme
 	litfile.open( litname.data(), ios::in );
 	if( !litfile.is_open() ) {
 		   
-		cerr << "Cannot open " << litname << endl;
+		cerr << "Cannot open " << litname << std::endl;
 		exit(2);
 
 	}
@@ -670,29 +670,29 @@ void scan::WriteTargetMatrixElementsToFile( string dirname, float xme, float yme
 void scan::PrintResults() {
 		
 	// Print to cout
-	cout << "\nChisq minimum found at " << ro.GetChisqMin() << endl;
-	cout << "X-axis ME = " << ro.GetXme() << "(-" << ro.GetXlow1sig();
-	cout << "; +" << ro.GetXupp1sig() << ")1sig." << " (-" << ro.GetXlow2sig();
-	cout << "; +" << ro.GetXupp2sig() << ")2sig." << endl;
-	cout << "Y-axis ME = " << ro.GetYme() << "(-" << ro.GetYlow1sig();
-	cout << "; +" << ro.GetYupp1sig() << ")1sig." << " (-" << ro.GetYlow2sig();
-	cout << "; +" << ro.GetYupp2sig() << ")2sig." << endl << endl;
+	std::cout << "\nChisq minimum found at " << ro.GetChisqMin() << std::endl;
+	std::cout << "X-axis ME = " << ro.GetXme() << "(-" << ro.GetXlow1sig();
+	std::cout << "; +" << ro.GetXupp1sig() << ")1sig." << " (-" << ro.GetXlow2sig();
+	std::cout << "; +" << ro.GetXupp2sig() << ")2sig." << std::endl;
+	std::cout << "Y-axis ME = " << ro.GetYme() << "(-" << ro.GetYlow1sig();
+	std::cout << "; +" << ro.GetYupp1sig() << ")1sig." << " (-" << ro.GetYlow2sig();
+	std::cout << "; +" << ro.GetYupp2sig() << ")2sig." << std::endl << std::endl;
 
 	// Print to file
 	rslt << "X-axis ME = " << ro.GetXme() << "(-" << ro.GetXlow1sig();
 	rslt << "; +" << ro.GetXupp1sig() << ")1sig." << " (-" << ro.GetXlow2sig();
-	rslt << "; +" << ro.GetXupp2sig() << ")2sig." << endl;
+	rslt << "; +" << ro.GetXupp2sig() << ")2sig." << std::endl;
 	rslt << "Y-axis ME = " << ro.GetYme() << "(-" << ro.GetYlow1sig();
 	rslt << "; +" << ro.GetYupp1sig() << ")1sig." << " (-" << ro.GetYlow2sig();
-	rslt << "; +" << ro.GetYupp2sig() << ")2sig." << endl << endl;
-	rslt << "Chisq minimum = " << ro.GetChisqMin() << endl;
-	rslt << "Ndata projectile: " << Ndata_proj << endl;
-	rslt << "          target: " << Ndata_targ << endl;
+	rslt << "; +" << ro.GetYupp2sig() << ")2sig." << std::endl << std::endl;
+	rslt << "Chisq minimum = " << ro.GetChisqMin() << std::endl;
+	rslt << "Ndata projectile: " << Ndata_proj << std::endl;
+	rslt << "          target: " << Ndata_targ << std::endl;
 	
 	// Check integration step was performed
-	if( intiflag && !no_calc ) cout << "Integration performed at each step\n";
-	else if( no_calc ) cout << "No calculations needed, results taken from chisq file\n\n";
-	else cout << "Integration performed with starting parameters only\n\n";
+	if( intiflag && !no_calc ) std::cout << "Integration performed at each step\n";
+	else if( no_calc ) std::cout << "No calculations needed, results taken from chisq file\n\n";
+	else std::cout << "Integration performed with starting parameters only\n\n";
 
 	
 	return;
@@ -706,13 +706,13 @@ void scan::PrintStep( float xme, float yme,
 	if( g2 ) chisq += chisq_targ;
 
 	// Print to terminal
-	cout << xme << "\t" << yme << "\t";
-	if( g2 ) cout << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
-	else cout << chisq << endl;
+	std::cout << xme << "\t" << yme << "\t";
+	if( g2 ) std::cout << chisq_proj << "\t" << chisq_targ << "\t" << chisq << std::endl;
+	else std::cout << chisq << std::endl;
 
 	// Print to file
 	out << xme << "\t" << yme << "\t";
-	out << chisq_proj << "\t" << chisq_targ << "\t" << chisq << endl;
+	out << chisq_proj << "\t" << chisq_targ << "\t" << chisq << std::endl;
 	
 	return;
 	
@@ -721,15 +721,15 @@ void scan::PrintStep( float xme, float yme,
 void scan::PrintHeader() {
 	
 	// Get chisq values and write to file
-	cout << "\n\t\t  Chi-squared value\n";
-	if( g2 ) cout << "  x\t  y\tProj\tTarg\tTotal\n";
-	else cout << "  x\t  y\tTotal\n";
+	std::cout << "\n\t\t  Chi-squared value\n";
+	if( g2 ) std::cout << "  x\t  y\tProj\tTarg\tTotal\n";
+	else std::cout << "  x\t  y\tTotal\n";
 
 	return;
 	
 }
 
-void scan::do_step( string dirname, int i, int j, float xme, float yme ) {
+void scan::do_step( std::string dirname, int i, int j, float xme, float yme ) {
 	
 	// Variables
 	float chisq_proj, chisq_targ = 0.0;
@@ -821,10 +821,10 @@ void scan::run_scan() {
 	each = todo / Npara;
 	if( todo > 0 ) left = todo % ( Npara * each );
 	
-	cout << endl << "Total calculations to do   = " << todo << endl;
-	cout << "Number of parallel threads = " << Npara << endl;
-	cout << "Calculations per thread    = " << each << endl;
-	cout << "Left over calculations     = " << left << endl << endl;
+	std::cout << std::endl << "Total calculations to do   = " << todo << std::endl;
+	std::cout << "Number of parallel threads = " << Npara << std::endl;
+	std::cout << "Calculations per thread    = " << each << std::endl;
+	std::cout << "Left over calculations     = " << left << std::endl << std::endl;
 	
 	if( todo > 0 ) PrintHeader();
 

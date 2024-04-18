@@ -12,8 +12,6 @@
 #include <string>
 #include <iostream>
 
-using namespace std;
-
 class rootobjs {
 	
 public:
@@ -25,7 +23,7 @@ public:
 	// Setup and the like
 	void SetupRoot( float _low_dme, float _upp_dme, int _Nsteps_dme,
 					float _low_tme, float _upp_tme, int _Nsteps_tme );
-	void OpenRootFile( string filename );
+	void OpenRootFile( std::string filename );
 	void WriteRootFile();
 	void MakeCuts();
 
@@ -55,7 +53,7 @@ private:
 	TGraph2D *gChisq_2sigma;
 	TGraph2D *gChisq_1sigma_rotorlim;
 	TGraph2D *gChisq_2sigma_rotorlim;
-	vector<TGraph*> gChisqDME;
+	std::vector<TGraph*> gChisqDME;
 	
 	// Objects - Histograms
 	TH2D *hChisq;
@@ -70,8 +68,8 @@ private:
 	TFile *root;
 	
 	// Strings and temp variables
-	string gName;
-	string rootname;
+	std::string gName;
+	std::string rootname;
 	
 	// Steps, limits, etc
 	int Nsteps_dme;

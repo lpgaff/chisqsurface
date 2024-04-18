@@ -12,11 +12,11 @@
 #include <iostream>
 #include <string>
 
-using namespace std;
+//using namespace std;
 
 // Get/Set arguments
-string in_proj;
-string intifile;
+std::string in_proj;
+std::string intifile;
 int Ndata_proj = 3;
 int Ndata_targ = 5;
 float low_yme = 0.1;
@@ -28,7 +28,7 @@ int Nsteps_xme = 1;
 int Nmini = 1;
 int Npara = 1;		// default back to linear mode
 bool readflag = false;
-string prevscan;
+std::string prevscan;
 bool g2 = true;		// default, gosia2
 int yme_index = 1;	// default, index 1
 int xme_index = 2;	// default, index 2

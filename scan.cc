@@ -260,8 +260,8 @@ void scan::RunCmd( std::string cmd ){
 	if( system(NULL) ) status = system( cmd.data() );
 	else {
 		
-		cerr << "Cannot run system command:" << std::endl;
-		cerr << "\t" << cmd << std::endl;
+		std::cerr << "Cannot run system command:" << std::endl;
+		std::cerr << "\t" << cmd << std::endl;
 		exit( status );
 
 	}
@@ -269,15 +269,15 @@ void scan::RunCmd( std::string cmd ){
 	// Error handling
 	if( status == 512 ) {
 		
-		cerr << "Check that this command runs correctly:";
-		cerr << "\t" << cmd << std::endl;
+		std::cerr << "Check that this command runs correctly:";
+		std::cerr << "\t" << cmd << std::endl;
 		exit( status );
 
 	}
 	
 	else if( status == 2 ) {
 		
-		cerr << "\nKilled!\n";
+		std::cerr << "\nKilled!\n";
 		exit( status );
 		
 	}
@@ -300,7 +300,7 @@ void scan::OpenOutputFiles(){
 	
 	if( readflag ){
 		
-		old.open( oldname.data(), ios::in );
+		old.open( oldname.data(), std::ios::in );
 		
 		if( !old.is_open() ) {
 			
@@ -312,8 +312,8 @@ void scan::OpenOutputFiles(){
 	
 	}
 	
-	out.open( textname.data(), ios::out );
-	rslt.open( rsltname.data(), ios::out );
+	out.open( textname.data(), std::ios::out );
+	rslt.open( rsltname.data(), std::ios::out );
 	ro.OpenRootFile( rootname );
 
 	return;
@@ -402,7 +402,7 @@ std::string scan::FindFileName( std::string in_file, std::string tape ) {
 	
 	// Open gosia input file for projectile and find the output file name
 	std::ifstream gin;
-	gin.open( in_file.data(), ios::in );
+	gin.open( in_file.data(), std::ios::in );
 	if( !gin.is_open() ) {
 		
 		std::cout << "Unable to open " << in_file << std::endl;
@@ -464,7 +464,7 @@ void scan::ReadChiSqFromFile( std::string gosiaoutfile, float &chisq ) {
 
 	// Open gosia output file for projectile or target. Get from input
 	std::ifstream g2out;
-	g2out.open( gosiaoutfile.data(), ios::in );
+	g2out.open( gosiaoutfile.data(), std::ios::in );
 	if( !g2out.is_open() ) {
 	
 		std::cout << "Unable to open " << gosiaoutfile << std::endl;
@@ -542,10 +542,10 @@ void scan::IntegrateProjectile( std::string dirname ) {
 	
 	std::ifstream inti;
 	std::string infile = dirname + "/" + intifile;
-	inti.open( infile.data(), ios::in );
+	inti.open( infile.data(), std::ios::in );
 	if( !inti.is_open() ) {
 		
-		cerr << "Cannot open " << infile << std::endl;
+		std::cerr << "Cannot open " << infile << std::endl;
 		exit(2);
 		
 	}
@@ -587,18 +587,18 @@ void scan::WriteProjectileMatrixElementsToFile( std::string dirname, float xme, 
 	bstname = dirname + "/" + bst_proj;
 	litname = bstname + ".lit";
 	
-	mefile.open( bstname.data(), ios::out );
-	litfile.open( litname.data(), ios::in );
+	mefile.open( bstname.data(), std::ios::out );
+	litfile.open( litname.data(), std::ios::in );
 	if( !mefile.is_open() ) {
 		
-		cerr << "Cannot open " << bstname << std::endl;
+		std::cerr << "Cannot open " << bstname << std::endl;
 		exit(2);
 
 	}
 	
 	if( !litfile.is_open() ) {
 		   
-		cerr << "Cannot open " << litname << std::endl;
+		std::cerr << "Cannot open " << litname << std::endl;
 		exit(2);
 
 	}
@@ -651,10 +651,10 @@ void scan::WriteTargetMatrixElementsToFile( std::string dirname, float xme, floa
 	bstname = dirname + "/" + bst_targ;
 	litname = bstname + ".lit";
 	
-	litfile.open( litname.data(), ios::in );
+	litfile.open( litname.data(), std::ios::in );
 	if( !litfile.is_open() ) {
 		   
-		cerr << "Cannot open " << litname << std::endl;
+		std::cerr << "Cannot open " << litname << std::endl;
 		exit(2);
 
 	}
@@ -729,24 +729,34 @@ void scan::PrintHeader() {
 	
 }
 
+void scan::loop_steps( std::string dirname, std::vector<int> i, std::vector<int> j, std::vector<float> xme, std::vector<float> yme ) {
+	
+	// Loop over calculations to be performed
+	for( int k = 0; k < xme.size(); ++k )
+		do_step( dirname, i[k], j[k], xme[k], yme[k] );
+
+	return;
+	
+}
+
 void scan::do_step( std::string dirname, int i, int j, float xme, float yme ) {
 	
 	// Variables
 	float chisq_proj, chisq_targ = 0.0;
-
+	
 	// Write matrix elements
 	WriteProjectileMatrixElementsToFile( dirname, xme, yme );
 	if( g2 ) WriteTargetMatrixElementsToFile( dirname, xme, yme );
-
+	
 	// Integration step
 	if( intiflag ) IntegrateProjectile( dirname );
 	
 	// Run Gosia2 or standard Gosia and return chisq values
 	GetChiSq( dirname, std::ref(chisq_proj), std::ref(chisq_targ) );
-
+	
 	chisq_proj *= Ndata_proj;
 	chisq_targ *= Ndata_targ;
-
+	
 	{
 		// Lock the printing and ROOT access
 		std::unique_lock<std::mutex> lock(mlock);
@@ -756,7 +766,7 @@ void scan::do_step( std::string dirname, int i, int j, float xme, float yme ) {
 		
 		// Update the flags
 		no_calc = false;
-
+		
 	}
 	
 	return;
@@ -828,40 +838,47 @@ void scan::run_scan() {
 	
 	if( todo > 0 ) PrintHeader();
 
-	vector<std::thread> op;
-	for( int k = 0; k < each; ++k ){
-				
-		for( int l = 0; l < Npara; ++l ){
-			
-			int jobN = k + l*each;
-			
-			std::thread calc( &scan::do_step,
-							 this, scandir[l],
-							 i_todo[jobN], j_todo[jobN],
-							 xme_todo[jobN], yme_todo[jobN] );
+	// Thread lists per parallel process
+	std::vector<std::thread> op;
+	std::vector<int> i_thread, j_thread;
+	std::vector<float> xme_thread, yme_thread;
+	for( int j = 0; j < Npara; ++j ){
+		
+		std::vector<int>().swap(i_thread);
+		std::vector<int>().swap(j_thread);
+		std::vector<float>().swap(xme_thread);
+		std::vector<float>().swap(yme_thread);
 
-			// Move in to the vector
-			op.push_back( std::move( calc ) );
+		// Make a list for each thread
+		for( int k = 0; k < each; ++k ){
+			
+			int jobNo = k + j*each;
+			i_thread.push_back( i_todo[jobNo] );
+			j_thread.push_back( j_todo[jobNo] );
+			xme_thread.push_back( xme_todo[jobNo] );
+			yme_thread.push_back( yme_todo[jobNo] );
 
 		}
-				
-		// Join the threads
-		for( unsigned int m = 0; m < op.size(); ++m ) {
-			
-			if( op[m].joinable() ) op[m].join();
-			//else op.erase( op.begin()+m );
-			
-		}
+		
+		std::thread calc( &scan::loop_steps,
+						 std::ref(*this), scandir[j],
+						 i_thread, j_thread,
+						 xme_thread, yme_thread );
+
+		// Move in to the vector
+		op.push_back( std::move( calc ) );
 
 	}
 	
+	// Join the threads
+	for( unsigned int m = 0; m < op.size(); ++m )
+		if( op[m].joinable() ) op[m].join();
+	
 	// Just linear for whatever is left over
-	for( int k = todo-left; k < todo; ++k ) {
-		
+	for( int k = todo-left; k < todo; ++k )
 		do_step( scandir[0], i_todo[k], j_todo[k], xme_todo[k], yme_todo[k] );
-		
-	}
 
+	
 	ro.MakeCuts();
 	ro.WriteRootFile();
 	

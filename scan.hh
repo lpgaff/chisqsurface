@@ -42,26 +42,27 @@ public:
 	~scan();
 	
 	// Lookup functions
-	std::string	FindFileName( string in_file, string tape );
+	std::string	FindFileName( std::string in_file, std::string tape );
 	void		LookUpOldChisq( float xme, float yme, float &chisq_proj, float &chisq_targ, bool &do_calc );
 	void		ContinueScan();
-	void		ReadChiSqFromFile( string gosiaoutfile, float &chisq );
-	void		GetChiSq( string dirname, float &chisq_proj, float &chisq_targ );
+	void		ReadChiSqFromFile( std::string gosiaoutfile, float &chisq );
+	void		GetChiSq( std::string dirname, float &chisq_proj, float &chisq_targ );
 
 	// Execution functions
-	void		IntegrateProjectile( string dirname );
-	void		WriteProjectileMatrixElementsToFile( string dirname, float xme, float yme );
-	void		WriteTargetMatrixElementsToFile( string dirname, float xme, float yme );
+	void		IntegrateProjectile( std::string dirname );
+	void		WriteProjectileMatrixElementsToFile( std::string dirname, float xme, float yme );
+	void		WriteTargetMatrixElementsToFile( std::string dirname, float xme, float yme );
 	void		RunCmd( std::string cmd );
 	
 	// Main functions
 	void		run_scan();
-	void		do_step( string dirname, int i, int j, float xme, float yme );
-	
+	void		loop_steps( std::string dirname, std::vector<int> i, std::vector<int> j, std::vector<float> xme, std::vector<float> yme );
+	void		do_step( std::string dirname, int i, int j, float xme, float yme );
+
 	// Getting the files
 	void		MakeScanDirectories();
 	void		GetAuxFiles();
-	void		CopyFileForScan( string filename );
+	void		CopyFileForScan( std::string filename );
 	void		OpenOutputFiles();
 	void		CloseOutputs();
 	void		CleanDirectories();

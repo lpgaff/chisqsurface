@@ -8,13 +8,13 @@
 
 rootobjs::rootobjs(){
 	
-	//cout << "Hello " <<  __PRETTY_FUNCTION__ << endl;
+	//std::cout << "Hello " <<  __PRETTY_FUNCTION__ << std::endl;
 	
 }
 
 rootobjs::~rootobjs(){
 	
-	//cout << "Hello " <<  __PRETTY_FUNCTION__ << endl;
+	//std::cout << "Hello " <<  __PRETTY_FUNCTION__ << std::endl;
 
 }
 
@@ -79,10 +79,10 @@ void rootobjs::SetupRoot( float _low_dme, float _upp_dme, int _Nsteps_dme,
 	}
 	
 	// 1-dimensional chisq graphs for each dme
-	string gName, gTitle, dme_str;
+	std::string gName, gTitle, dme_str;
 	for( int id = 0; id < Nsteps_dme; id++ ){
-		dme_str = to_string( (float)(low_dme + id*stepSize_dme) );
-		gName = "gChisq_" + to_string(id);
+		dme_str = std::to_string( (float)(low_dme + id*stepSize_dme) );
+		gName = "gChisq_" + std::to_string(id);
 		gTitle = "#chi^{2} surface plot for DME = " + dme_str;
 		gTitle += " eb;<0^{+}||E2||2^{+}> [eb];#chi^{2}";
 		gChisqDME.push_back( new TGraph(Nsteps_tme) );
@@ -119,13 +119,13 @@ void rootobjs::SetupRoot( float _low_dme, float _upp_dme, int _Nsteps_dme,
 		Nsteps_dme, low_dme-0.5*stepSize_dme, upp_dme+0.5*stepSize_dme,
 		Nsteps_tme, low_tme-0.5*stepSize_tme, upp_tme+0.5*stepSize_tme);
 
-	//cout << "Made ROOT objects" << endl;
+	//std::cout << "Made ROOT objects" << std::endl;
 	
 	return;
 	
 }
 
-void rootobjs::OpenRootFile( string filename ) {
+void rootobjs::OpenRootFile( std::string filename ) {
 	
 	// Open ROOT file
 	rootname = filename;
@@ -157,7 +157,7 @@ void rootobjs::WriteRootFile() {
 	hChisq_2sigma_rotorlim->Write("hChisq_2sigma_rotorlim");
 	
 	for( int id = 0; id < Nsteps_dme; id++ ) {
-		gName = "gChisq_DME_" + to_string(id);
+		gName = "gChisq_DME_" + std::to_string(id);
 		gChisqDME[id]->Write(gName.c_str());
 	}
 	

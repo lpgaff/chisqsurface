@@ -860,6 +860,17 @@ void scan::run_scan() {
 
 		}
 		
+		// Check for the left overs
+		if( left > 0 && left < Npara ) {
+			
+			int jobNo = todo-left+Npara;
+			i_thread.push_back( i_todo[jobNo] );
+			j_thread.push_back( j_todo[jobNo] );
+			xme_thread.push_back( xme_todo[jobNo] );
+			yme_thread.push_back( yme_todo[jobNo] );
+
+		}
+		
 		std::thread calc( &scan::loop_steps,
 						 std::ref(*this), scandir[j],
 						 i_thread, j_thread,
@@ -873,10 +884,6 @@ void scan::run_scan() {
 	// Join the threads
 	for( unsigned int m = 0; m < op.size(); ++m )
 		if( op[m].joinable() ) op[m].join();
-	
-	// Just linear for whatever is left over
-	for( int k = todo-left; k < todo; ++k )
-		do_step( scandir[0], i_todo[k], j_todo[k], xme_todo[k], yme_todo[k] );
 
 	
 	ro.MakeCuts();

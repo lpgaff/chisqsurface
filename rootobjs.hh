@@ -5,6 +5,7 @@
 #define __rootobjs_hh__
 
 #include "TFile.h"
+#include "TMath.h"
 #include "TH2D.h"
 #include "TGraph.h"
 #include "TGraph2D.h"

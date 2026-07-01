@@ -54,13 +54,13 @@ void rootobjs::SetupRoot( float _low_dme, float _upp_dme, int _Nsteps_dme,
 	gChisq_1sigma->SetTitle("#chi^{2}+1 cut;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
 
 	gChisq_2sigma->SetName("gChisq_2sigma");
-	gChisq_2sigma->SetTitle("#chi^{2}+2 cut;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
+	gChisq_2sigma->SetTitle("#chi^{2}+4 cut;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
 
 	gChisq_1sigma_rotorlim->SetName("gChisq_1sigma_rotorlim");
 	gChisq_1sigma_rotorlim->SetTitle("#chi^{2}+1 cut plus rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
 
 	gChisq_2sigma_rotorlim->SetName("gChisq_2sigma_rotorlim");
-	gChisq_2sigma_rotorlim->SetTitle("#chi^{2}+2 cut plus rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
+	gChisq_2sigma_rotorlim->SetTitle("#chi^{2}+4 cut plus rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}");
 
 	if( Nsteps_dme > 4 && Nsteps_dme < 999 ) {
 		gChisq->SetNpx(Nsteps_dme-1);
@@ -111,11 +111,11 @@ void rootobjs::SetupRoot( float _low_dme, float _upp_dme, int _Nsteps_dme,
 		Nsteps_dme, low_dme-0.5*stepSize_dme, upp_dme+0.5*stepSize_dme,
 		Nsteps_tme, low_tme-0.5*stepSize_tme, upp_tme+0.5*stepSize_tme);
 	hChisq_2sigma = new TH2D("hChisq_2sigma",
-		"#chi^{2}+2 cut;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}",
+		"#chi^{2}+4 cut;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}",
 		Nsteps_dme, low_dme-0.5*stepSize_dme, upp_dme+0.5*stepSize_dme,
 		Nsteps_tme, low_tme-0.5*stepSize_tme, upp_tme+0.5*stepSize_tme);
 	hChisq_2sigma_rotorlim = new TH2D("hChisq_2sigma_rotorlim",
-		"#chi^{2}+2 cut plus rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}",
+		"#chi^{2}+4 cut plus rigid rotor limits;<2^{+}||E2||2^{+}> [eb];<0^{+}||E2||2^{+}> [eb];#chi^{2}",
 		Nsteps_dme, low_dme-0.5*stepSize_dme, upp_dme+0.5*stepSize_dme,
 		Nsteps_tme, low_tme-0.5*stepSize_tme, upp_tme+0.5*stepSize_tme);
 
@@ -201,7 +201,7 @@ void rootobjs::MakeCuts() {
 				
 			}
 			
-			if( chisq_tmp <= chisq_min+2 ) {
+			if( chisq_tmp <= chisq_min+4 ) {
 				
 				gChisq_2sigma->SetPoint( ctr3, dme_tmp, tme_tmp, chisq_tmp );
 				hChisq_2sigma->SetBinContent( p+1, q+1, chisq_tmp );

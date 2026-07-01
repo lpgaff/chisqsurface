@@ -861,9 +861,9 @@ void scan::run_scan() {
 		}
 		
 		// Check for the left overs
-		if( left > 0 && left < Npara ) {
+		if( left > 0 && j < left ) {
 			
-			int jobNo = todo-left+Npara;
+			int jobNo = todo-left+j;
 			i_thread.push_back( i_todo[jobNo] );
 			j_thread.push_back( j_todo[jobNo] );
 			xme_thread.push_back( xme_todo[jobNo] );
